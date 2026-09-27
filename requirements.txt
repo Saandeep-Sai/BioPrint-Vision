@@ -1,0 +1,17 @@
+# BioPrint Vision - Dependencies
+# Core ML
+torch>=2.2.0
+torchvision>=0.17.0
+# Image processing
+opencv-python-headless>=4.9.0
+Pillow>=10.0.0
+# Data science & metrics
+numpy>=1.24.0
+scikit-learn>=1.3.0
+# Visualization (offline evaluation only)
+matplotlib>=3.7.0
+seaborn>=0.12.0
+# Web UI
+gradio>=4.0.0
+# Utilities
+tqdm>=4.65.0

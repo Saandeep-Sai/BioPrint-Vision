@@ -1,0 +1,142 @@
+{
+  "data_dir": "D:\\BioPrint-Vision\\data\\raw",
+  "class_count": 8,
+  "class_names": [
+    "A+",
+    "A-",
+    "AB+",
+    "AB-",
+    "B+",
+    "B-",
+    "O+",
+    "O-"
+  ],
+  "total_images": 6000,
+  "images_per_class": {
+    "A+": 565,
+    "A-": 1009,
+    "AB+": 708,
+    "AB-": 761,
+    "B+": 652,
+    "B-": 741,
+    "O+": 852,
+    "O-": 712
+  },
+  "file_extensions": {
+    ".bmp": 6000
+  },
+  "dimensions": {
+    "96x103": 5956,
+    "241x298": 44
+  },
+  "channels": {
+    "RGBA": 5956,
+    "RGB": 44
+  },
+  "corrupt_images": [],
+  "duplicate_files": [
+    [
+      "data\\raw\\A-\\cluster_1_120.BMP",
+      "data\\raw\\A-\\cluster_1_1694.BMP"
+    ],
+    [
+      "data\\raw\\AB+\\cluster_4_193.BMP",
+      "data\\raw\\AB+\\cluster_4_397.BMP"
+    ],
+    [
+      "data\\raw\\AB+\\cluster_4_3003.BMP",
+      "data\\raw\\AB+\\cluster_4_325.BMP"
+    ],
+    [
+      "data\\raw\\AB+\\cluster_4_4296.BMP",
+      "data\\raw\\AB+\\cluster_4_5675.BMP"
+    ],
+    [
+      "data\\raw\\AB-\\cluster_5_2347.BMP",
+      "data\\raw\\AB-\\cluster_5_4907.BMP"
+    ],
+    [
+      "data\\raw\\B+\\cluster_2_2511.BMP",
+      "data\\raw\\B+\\cluster_2_4268.BMP",
+      "data\\raw\\B+\\cluster_2_5333.BMP",
+      "data\\raw\\B+\\cluster_2_5356.BMP",
+      "data\\raw\\B+\\cluster_2_829.BMP"
+    ],
+    [
+      "data\\raw\\O+\\cluster_6_3415.BMP",
+      "data\\raw\\O+\\cluster_6_720.BMP"
+    ],
+    [
+      "data\\raw\\O-\\cluster_7_1040.BMP",
+      "data\\raw\\O-\\cluster_7_5447.BMP"
+    ],
+    [
+      "data\\raw\\O-\\cluster_7_1468.BMP",
+      "data\\raw\\O-\\cluster_7_1819.BMP",
+      "data\\raw\\O-\\cluster_7_5380.BMP"
+    ],
+    [
+      "data\\raw\\O-\\cluster_7_2270.BMP",
+      "data\\raw\\O-\\cluster_7_5326.BMP"
+    ],
+    [
+      "data\\raw\\O-\\cluster_7_3871.BMP",
+      "data\\raw\\O-\\cluster_7_4235.BMP"
+    ]
+  ],
+  "filename_pattern_analysis": {
+    "sample_filenames": [
+      "cluster_0_1001.BMP",
+      "cluster_0_1005.BMP",
+      "cluster_0_1009.BMP",
+      "cluster_0_1026.BMP",
+      "cluster_0_1029.BMP",
+      "cluster_1_0.BMP",
+      "cluster_1_1.BMP",
+      "cluster_1_1000.BMP",
+      "cluster_1_1007.BMP",
+      "cluster_1_1008.BMP",
+      "cluster_4_100.BMP",
+      "cluster_4_1016.BMP",
+      "cluster_4_103.BMP",
+      "cluster_4_1030.BMP",
+      "cluster_4_1042.BMP",
+      "cluster_5_1003.BMP",
+      "cluster_5_1013.BMP",
+      "cluster_5_1024.BMP",
+      "cluster_5_105.BMP",
+      "cluster_5_1052.BMP",
+      "cluster_2_10.BMP",
+      "cluster_2_1006.BMP",
+      "cluster_2_1012.BMP",
+      "cluster_2_1021.BMP",
+      "cluster_2_1038.BMP",
+      "cluster_3_1017.BMP",
+      "cluster_3_1018.BMP",
+      "cluster_3_1032.BMP",
+      "cluster_3_1035.BMP",
+      "cluster_3_1050.BMP",
+      "cluster_6_1004.BMP",
+      "cluster_6_1019.BMP",
+      "cluster_6_102.BMP",
+      "cluster_6_1023.BMP",
+      "cluster_6_1033.BMP",
+      "cluster_7_1002.BMP",
+      "cluster_7_1014.BMP",
+      "cluster_7_1028.BMP",
+      "cluster_7_1037.BMP",
+      "cluster_7_1040.BMP"
+    ],
+    "pattern": "cluster_<cluster_id>_<sequence_number>.BMP",
+    "notes": "Filenames follow pattern 'cluster_X_YYYY.BMP' where X is a cluster ID (0-7) and YYYY is a sequence number. The sequence number does NOT appear to encode a subject/person ID. Multiple fingerprints could be from the same person but there is no metadata to confirm or deny this."
+  },
+  "subject_id_available": false,
+  "subject_id_notes": "No subject/person identifiers are available in the filename or directory structure. The dataset uses cluster_X_YYYY.BMP naming where the sequence number cannot be confirmed as a subject ID. This means we CANNOT guarantee subject-disjoint splits. Multiple fingerprints from the same individual may exist in both train and test sets. This is a known limitation.",
+  "duplicate_count": 15,
+  "class_imbalance": {
+    "max_class_count": 1009,
+    "min_class_count": 565,
+    "imbalance_ratio": 1.79,
+    "mean_per_class": 750.0
+  }
+}

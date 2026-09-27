@@ -1,0 +1,302 @@
+[
+  {
+    "index": 474,
+    "true_class": "A+",
+    "pred_class": "AB+",
+    "confidence": 99.77
+  },
+  {
+    "index": 2520,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 99.75
+  },
+  {
+    "index": 161,
+    "true_class": "A+",
+    "pred_class": "O-",
+    "confidence": 99.2
+  },
+  {
+    "index": 2547,
+    "true_class": "AB-",
+    "pred_class": "B+",
+    "confidence": 98.99
+  },
+  {
+    "index": 87,
+    "true_class": "A+",
+    "pred_class": "AB+",
+    "confidence": 98.62
+  },
+  {
+    "index": 4641,
+    "true_class": "O+",
+    "pred_class": "AB+",
+    "confidence": 98.25
+  },
+  {
+    "index": 565,
+    "true_class": "A-",
+    "pred_class": "O-",
+    "confidence": 97.19
+  },
+  {
+    "index": 3502,
+    "true_class": "B+",
+    "pred_class": "B-",
+    "confidence": 95.79
+  },
+  {
+    "index": 4550,
+    "true_class": "O+",
+    "pred_class": "AB+",
+    "confidence": 95.71
+  },
+  {
+    "index": 1901,
+    "true_class": "AB+",
+    "pred_class": "O-",
+    "confidence": 94.44
+  },
+  {
+    "index": 1407,
+    "true_class": "A-",
+    "pred_class": "O+",
+    "confidence": 93.75
+  },
+  {
+    "index": 2385,
+    "true_class": "AB-",
+    "pred_class": "B+",
+    "confidence": 93.52
+  },
+  {
+    "index": 3922,
+    "true_class": "B-",
+    "pred_class": "B+",
+    "confidence": 93.31
+  },
+  {
+    "index": 1896,
+    "true_class": "AB+",
+    "pred_class": "B+",
+    "confidence": 93.08
+  },
+  {
+    "index": 5703,
+    "true_class": "O-",
+    "pred_class": "AB-",
+    "confidence": 92.87
+  },
+  {
+    "index": 99,
+    "true_class": "A+",
+    "pred_class": "AB+",
+    "confidence": 92.73
+  },
+  {
+    "index": 2256,
+    "true_class": "AB+",
+    "pred_class": "B+",
+    "confidence": 92.22
+  },
+  {
+    "index": 5977,
+    "true_class": "O-",
+    "pred_class": "AB+",
+    "confidence": 92.07
+  },
+  {
+    "index": 3005,
+    "true_class": "AB-",
+    "pred_class": "A-",
+    "confidence": 92.05
+  },
+  {
+    "index": 2944,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 91.93
+  },
+  {
+    "index": 2617,
+    "true_class": "AB-",
+    "pred_class": "B+",
+    "confidence": 91.46
+  },
+  {
+    "index": 2688,
+    "true_class": "AB-",
+    "pred_class": "B-",
+    "confidence": 91.44
+  },
+  {
+    "index": 708,
+    "true_class": "A-",
+    "pred_class": "O-",
+    "confidence": 90.24
+  },
+  {
+    "index": 504,
+    "true_class": "A+",
+    "pred_class": "O+",
+    "confidence": 89.23
+  },
+  {
+    "index": 2974,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 88.63
+  },
+  {
+    "index": 626,
+    "true_class": "A-",
+    "pred_class": "B-",
+    "confidence": 87.18
+  },
+  {
+    "index": 1120,
+    "true_class": "A-",
+    "pred_class": "B+",
+    "confidence": 86.49
+  },
+  {
+    "index": 5778,
+    "true_class": "O-",
+    "pred_class": "O+",
+    "confidence": 84.83
+  },
+  {
+    "index": 5750,
+    "true_class": "O-",
+    "pred_class": "O+",
+    "confidence": 84.27
+  },
+  {
+    "index": 2747,
+    "true_class": "AB-",
+    "pred_class": "B+",
+    "confidence": 82.86
+  },
+  {
+    "index": 4374,
+    "true_class": "B-",
+    "pred_class": "A-",
+    "confidence": 82.07
+  },
+  {
+    "index": 638,
+    "true_class": "A-",
+    "pred_class": "B-",
+    "confidence": 81.41
+  },
+  {
+    "index": 2681,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 81.05
+  },
+  {
+    "index": 2430,
+    "true_class": "AB-",
+    "pred_class": "A-",
+    "confidence": 80.38
+  },
+  {
+    "index": 973,
+    "true_class": "A-",
+    "pred_class": "B-",
+    "confidence": 80.05
+  },
+  {
+    "index": 1217,
+    "true_class": "A-",
+    "pred_class": "AB-",
+    "confidence": 79.97
+  },
+  {
+    "index": 2985,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 79.95
+  },
+  {
+    "index": 5423,
+    "true_class": "O-",
+    "pred_class": "AB+",
+    "confidence": 78.03
+  },
+  {
+    "index": 3919,
+    "true_class": "B-",
+    "pred_class": "B+",
+    "confidence": 77.73
+  },
+  {
+    "index": 5905,
+    "true_class": "O-",
+    "pred_class": "A-",
+    "confidence": 77.63
+  },
+  {
+    "index": 3261,
+    "true_class": "B+",
+    "pred_class": "A-",
+    "confidence": 77.53
+  },
+  {
+    "index": 951,
+    "true_class": "A-",
+    "pred_class": "AB+",
+    "confidence": 77.53
+  },
+  {
+    "index": 2730,
+    "true_class": "AB-",
+    "pred_class": "O-",
+    "confidence": 77.46
+  },
+  {
+    "index": 4227,
+    "true_class": "B-",
+    "pred_class": "AB-",
+    "confidence": 76.52
+  },
+  {
+    "index": 1665,
+    "true_class": "AB+",
+    "pred_class": "B+",
+    "confidence": 74.92
+  },
+  {
+    "index": 697,
+    "true_class": "A-",
+    "pred_class": "B-",
+    "confidence": 74.34
+  },
+  {
+    "index": 5081,
+    "true_class": "O+",
+    "pred_class": "O-",
+    "confidence": 74.27
+  },
+  {
+    "index": 3794,
+    "true_class": "B-",
+    "pred_class": "A-",
+    "confidence": 74.02
+  },
+  {
+    "index": 4906,
+    "true_class": "O+",
+    "pred_class": "O-",
+    "confidence": 73.59
+  },
+  {
+    "index": 3697,
+    "true_class": "B-",
+    "pred_class": "A-",
+    "confidence": 73.39
+  }
+]

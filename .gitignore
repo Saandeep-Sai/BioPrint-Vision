@@ -1,0 +1,52 @@
+# BioPrint Vision - .gitignore
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Model weights (large files)
+models/*.pth
+models/*.pt
+
+# Dataset (large, not tracked)
+data/raw/
+data/processed/
+dataset_source/
+
+# Reference project (external)
+reference_project/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Evaluation outputs (regenerable)
+evaluation/*.png
+
+# Uploads
+uploads/
+dataset_source/
+reference_project/
+
+
+
+BioPrint_Vision_Prototype_PRD.md
+BioPrint_Vision_Remaining_Prototype_PRD.md
