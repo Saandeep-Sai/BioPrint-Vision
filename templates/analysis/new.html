@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}New Fingerprint Analysis : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+    <div class="col-lg-8">
+        <div class="card p-4 shadow-sm border-0 mb-4">
+            <h3 class="fw-bold mb-1"><i class="bi bi-fingerprint text-danger me-2"></i>New Fingerprint Analysis</h3>
+            <p class="text-muted small mb-4">
+                Upload a single fingerprint image or a photograph containing multiple fingerprints. 
+                Our automated CV pipeline will isolate individual impressions, assess crop quality, and average raw probability vectors.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data" id="analysisForm">
+                <!-- Mode Selection -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Analysis Mode</label>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="radio" class="btn-check" name="mode" id="modeAuto" value="auto" checked>
+                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeAuto">
+                                <div class="fw-bold"><i class="bi bi-magic me-1"></i> Auto-Detect</div>
+                                <div class="small text-muted">Automatically detects 1 or multiple fingers</div>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="radio" class="btn-check" name="mode" id="modeSingle" value="single">
+                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeSingle">
+                                <div class="fw-bold"><i class="bi bi-file-earmark-image me-1"></i> Single Finger</div>
+                                <div class="small text-muted">Treats image as 1 cropped fingerprint</div>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="radio" class="btn-check" name="mode" id="modeMultiple" value="multiple">
+                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeMultiple">
+                                <div class="fw-bold"><i class="bi bi-grid-3x3 me-1"></i> Multi-Finger</div>
+                                <div class="small text-muted">Splits & averages 2+ impressions</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Input -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Upload Fingerprint Image / Photograph</label>
+                    <div class="p-4 rounded text-center" style="border: 2px dashed rgba(244, 63, 94, 0.4); background: rgba(15, 23, 42, 0.7);">
+                        <i class="bi bi-cloud-arrow-up fs-1 text-danger"></i>
+                        <div class="mt-2 fw-semibold text-light">Select an image file</div>
+                        <div class="text-muted small mb-3">Supported formats: BMP, PNG, JPG, JPEG (Max 16MB)</div>
+                        <input type="file" name="fingerprint_image" id="fingerprintInput" class="form-control w-75 mx-auto" accept=".bmp,.png,.jpg,.jpeg" required onchange="previewImage(this)">
+                        <div id="imagePreviewContainer" class="mt-3 d-none">
+                            <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail border-secondary" style="max-height: 220px; background-color: #070a12;">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-rose btn-lg w-100 py-3 fw-bold" id="submitBtn">
+                    <i class="bi bi-lightning-charge-fill me-2"></i> Run Automated Analysis
+                </button>
+            </form>
+        </div>
+
+        <!-- Pre-Packaged Verified Samples Card -->
+        <div class="card p-3 bg-white border mb-4">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-stars text-warning me-2"></i>1-Click Verified Sample Images</h6>
+            <p class="text-muted small mb-3">Test the pipeline instantly using authentic impressions from the audited local dataset:</p>
+            <div class="row g-2">
+                {% for s in samples %}
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSample('{{ s.path }}')">
+                        <i class="bi bi-file-earmark-check text-success me-1"></i>
+                        <strong class="text-light">{{ s.label }}</strong>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="small text-muted mt-2">
+                <em>*Clicking a sample will prepare that file from the project's data directory for testing.</em>
+            </div>
+        </div>
+
+        <!-- Acquisition Guidelines -->
+        <div class="card p-3 bg-light border-0">
+            <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb text-primary me-2"></i>Fingerprint Image Quality Tips</h6>
+            <ul class="text-muted small mb-0 ps-3">
+                <li>Ensure even lighting without heavy cast shadows or surface glare.</li>
+                <li>Position the camera perpendicular to the fingerprint impressions to reduce perspective distortion.</li>
+                <li>Ensure papillary ridge details and bifurcations are in sharp focus.</li>
+                <li>Leave adequate spacing between multiple fingerprints so bounding boxes don't merge.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function previewImage(input) {
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const preview = document.getElementById('imagePreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.classList.remove('d-none');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function loadSample(samplePath) {
+    // Fetch sample image file as Blob and attach to input
+    fetch('/static/' + samplePath).then(res => {
+        if (!res.ok) {
+            // fallback direct path
+            return fetch('/' + samplePath);
+        }
+        return res;
+    }).then(r => r.blob()).then(blob => {
+        const file = new File([blob], samplePath.split('/').pop(), { type: 'image/bmp' });
+        const container = new DataTransfer();
+        container.items.add(file);
+        const input = document.getElementById('fingerprintInput');
+        input.files = container.files;
+        previewImage(input);
+        alert('Loaded sample: ' + samplePath + '. Click "Run Automated Analysis" to proceed.');
+    }).catch(e => {
+        alert('To test this sample, you can select it from: ' + samplePath);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+﻿{% extends "base.html" %}
+
+{% block title %}System Analyses Audit : BioPrint Vision Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Analyses Audit</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">System-Wide Analysis Audit Log</h2>
+            <p class="text-muted small mb-0">Comprehensive record of all biometric predictions and aggregate metrics across users</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Admin Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if analyses %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th class="ps-3">ID</th>
+                            <th>Timestamp (UTC)</th>
+                            <th>User Account</th>
+                            <th>Mode</th>
+                            <th>Regions (Det/Ana/Excl)</th>
+                            <th>Predicted Group</th>
+                            <th>Model Confidence</th>
+                            <th>Intra-Sheet Agreement</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in analyses %}
+                        <tr>
+                            <td class="ps-3 fw-bold">#{{ a.id }}</td>
+                            <td class="small text-muted">{{ a.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <div class="fw-semibold small">{{ a.user.name if a.user else 'Unknown' }}</div>
+                                <div class="text-muted small">{{ a.user.email if a.user else 'N/A' }}</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ a.mode }}</span></td>
+                            <td class="small">
+                                <span class="fw-bold">{{ a.fingerprints_detected }}</span> det /
+                                <span class="text-success fw-bold">{{ a.fingerprints_analyzed }}</span> ana /
+                                <span class="{% if a.fingerprints_excluded > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ a.fingerprints_excluded }}</span> excl
+                            </td>
+                            <td>
+                                <span class="badge bg-danger fs-6 px-3 py-1">{{ a.final_blood_group }}</span>
+                            </td>
+                            <td class="fw-bold">
+                                {{ "%.2f"|format(a.final_confidence) }}%
+                            </td>
+                            <td>
+                                {% if a.agreement_percentage >= 80 %}
+                                    <span class="badge bg-success">{{ "%.1f"|format(a.agreement_percentage) }}%</span>
+                                {% elif a.agreement_percentage >= 50 %}
+                                    <span class="badge bg-warning text-dark">{{ "%.1f"|format(a.agreement_percentage) }}%</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ "%.1f"|format(a.agreement_percentage) }}%</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{{ url_for('analysis.view_analysis', analysis_id=a.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-journal-x display-3 mb-3 d-block"></i>
+                <h5 class="fw-bold">No Analyses Found</h5>
+                <p class="small">No analysis records are present in the database audit log.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

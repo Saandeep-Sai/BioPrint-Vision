@@ -1,0 +1,163 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Blood Compatibility Guide : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="mb-4">
+        <h2 class="h3 fw-bold mb-1">Clinical Blood Group Compatibility Matrix</h2>
+        <p class="text-muted small mb-0">Deterministic red blood cell (RBC) and plasma transfusion compatibility guidelines based on ABO and Rh antigens.</p>
+    </div>
+
+    <!-- Blood Group Selection Buttons -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="fw-bold text-secondary me-2 small">Select Blood Group to Explore:</span>
+                {% for bg in ["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"] %}
+                <a href="{{ url_for('donor.compatibility_explorer', blood_group=bg) }}" 
+                   class="btn {% if bg == selected_bg %}btn-danger fw-bold shadow-sm{% else %}btn-outline-secondary{% endif %} px-3">
+                    {{ bg }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Spotlight Details for Selected Blood Group -->
+    <div class="row g-4 mb-4">
+        <!-- Red Cell Dynamics -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-droplet-fill text-danger me-2"></i>Red Blood Cell (RBC) Compatibility
+                    </h5>
+                    <span class="badge bg-danger fs-6 px-3">{{ selected_bg }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-success text-uppercase small mb-2">
+                            <i class="bi bi-arrow-up-right-circle me-1"></i>Can Donate Red Cells To:
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for recipient in info.red_cells.can_donate_to %}
+                            <span class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-2">{{ recipient }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-primary text-uppercase small mb-2">
+                            <i class="bi bi-arrow-down-left-circle me-1"></i>Can Receive Red Cells From:
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for donor_group in info.red_cells.can_receive_from %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary fs-6 px-3 py-2">{{ donor_group }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if info.universal_donor %}
+                    <div class="alert alert-success border-success mt-4 py-2 px-3 small mb-0">
+                        <i class="bi bi-star-fill me-1"></i> <strong>Universal Red Cell Donor:</strong> O Negative red cells lack A, B, and Rh antigens, making them safe for emergency red cell transfusion to all patients.
+                    </div>
+                    {% endif %}
+                    {% if info.universal_recipient %}
+                    <div class="alert alert-info border-info mt-4 py-2 px-3 small mb-0">
+                        <i class="bi bi-star-fill me-1"></i> <strong>Universal Red Cell Recipient:</strong> AB Positive individuals have A, B, and Rh antigens and lack antibodies against them, enabling safe receipt of red cells from any donor type.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Plasma Dynamics -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-moisture text-warning me-2"></i>Plasma Compatibility
+                    </h5>
+                    <span class="badge bg-warning text-dark fs-6 px-3">{{ selected_bg }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-success text-uppercase small mb-2">
+                            <i class="bi bi-arrow-up-right-circle me-1"></i>Can Donate Plasma To:
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for p_recipient in info.plasma.can_donate_to %}
+                            <span class="badge bg-warning-subtle text-dark border border-warning fs-6 px-3 py-2">{{ p_recipient }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-primary text-uppercase small mb-2">
+                            <i class="bi bi-arrow-down-left-circle me-1"></i>Can Receive Plasma From:
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for p_donor in info.plasma.can_receive_from %}
+                            <span class="badge bg-secondary-subtle text-dark border border-secondary fs-6 px-3 py-2">{{ p_donor }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted mt-4 mb-0">
+                        <i class="bi bi-info-circle me-1"></i> <strong>Note on Plasma:</strong> Plasma rules are the inverse of red cell rules. For example, AB individuals are Universal Plasma Donors because their plasma contains neither anti-A nor anti-B antibodies.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete 8x8 Compatibility Grid -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-grid-3x3 me-2 text-danger"></i>Full 8 × 8 Red Blood Cell Transfusion Matrix
+            </h5>
+            <small class="text-muted">Columns represent Donor blood type; Rows represent Recipient patient blood type.</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-start bg-secondary-subtle">Recipient \ Donor</th>
+                            {% for col in ["O-", "O+", "B-", "B+", "A-", "A+", "AB-", "AB+"] %}
+                            <th class="{% if col == selected_bg %}table-danger fw-bold{% endif %}">{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in ["AB+", "AB-", "A+", "A-", "B+", "B-", "O+", "O-"] %}
+                        <tr class="{% if row == selected_bg %}table-danger bg-opacity-25{% endif %}">
+                            <td class="text-start fw-bold {% if row == selected_bg %}table-danger{% else %}table-light{% endif %}">
+                                {{ row }} Recipient
+                            </td>
+                            {% for col in ["O-", "O+", "B-", "B+", "A-", "A+", "AB-", "AB+"] %}
+                            <td>
+                                {% if col in all_rules[row].can_receive_from %}
+                                    <span class="badge bg-success rounded-pill px-2 py-1" title="{{ col }} can donate to {{ row }}">
+                                        <i class="bi bi-check-lg"></i>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted opacity-25" title="Incompatible">
+                                        <i class="bi bi-x-lg"></i>
+                                    </span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

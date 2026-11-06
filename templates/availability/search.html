@@ -1,0 +1,161 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Blood Stock Availability & Directory : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="mb-4">
+        <h2 class="h3 fw-bold mb-1">Blood Availability & Facility Directory</h2>
+        <p class="text-muted small mb-0">Search registered hospitals and licensed blood banks for active blood unit inventory.</p>
+    </div>
+
+    <!-- Mandatory PRD Demo Stock Notice Banner -->
+    <div class="alert alert-warning border-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill text-warning fs-4 me-3"></i>
+        <div class="small">
+            <strong>SYNTHETIC DEMONSTRATION DATA:</strong> {{ demo_notice }} Inventory levels displayed are simulated for platform demonstration and technical verification. For real medical emergencies, contact hospital emergency desks directly.
+        </div>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET" action="{{ url_for('availability.browse_availability') }}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Blood Group</label>
+                    <select name="blood_group" class="form-select">
+                        <option value="">All Blood Groups</option>
+                        {% for bg in ["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"] %}
+                        <option value="{{ bg }}" {% if selected_bg == bg %}selected{% endif %}>{{ bg }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">City</label>
+                    <select name="city" class="form-select">
+                        <option value="">All Cities</option>
+                        {% for c in cities %}
+                        <option value="{{ c }}" {% if selected_city == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Facility Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="Hospital" {% if selected_type == 'Hospital' %}selected{% endif %}>Hospital</option>
+                        <option value="Blood Bank" {% if selected_type == 'Blood Bank' %}selected{% endif %}>Blood Bank</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Stock Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Available" {% if selected_status == 'Available' %}selected{% endif %}>Available (≥ 8)</option>
+                        <option value="Low Stock" {% if selected_status == 'Low Stock' %}selected{% endif %}>Low Stock (1-7)</option>
+                        <option value="Critical" {% if selected_status == 'Critical' %}selected{% endif %}>Critical / 0</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-rose w-100">
+                        <i class="bi bi-search me-1"></i> Filter
+                    </button>
+                    <a href="{{ url_for('availability.browse_availability') }}" class="btn btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Facility Results List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark">
+                Search Results <span class="badge bg-secondary ms-2">{{ total_count }}</span>
+            </h5>
+            <span class="demo-badge">Simulated Inventory</span>
+        </div>
+        <div class="card-body p-0">
+            {% if results %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th class="ps-3">Facility Name</th>
+                            <th>Type</th>
+                            <th>City & Location</th>
+                            <th>Contact</th>
+                            {% if selected_bg %}
+                            <th>Blood Group</th>
+                            <th>Units Available</th>
+                            <th>Status</th>
+                            {% else %}
+                            <th>Total Units Available</th>
+                            {% endif %}
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+                            <td class="ps-3">
+                                <a href="{{ url_for('availability.facility_detail', facility_id=r.facility_id) }}" class="fw-bold text-dark text-decoration-none">
+                                    {{ r.facility_name }}
+                                </a>
+                                {% if r.is_demo %}
+                                <span class="badge bg-light text-muted border ms-1" style="font-size: 0.65rem;">DEMO</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ r.facility_type }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ r.city }}</div>
+                                <div class="text-muted small">{{ r.address }}</div>
+                            </td>
+                            <td class="small">
+                                <div><i class="bi bi-telephone text-muted me-1"></i>{{ r.phone }}</div>
+                                {% if r.email %}
+                                <div class="text-muted"><i class="bi bi-envelope text-muted me-1"></i>{{ r.email }}</div>
+                                {% endif %}
+                            </td>
+                            {% if selected_bg %}
+                            <td>
+                                <span class="badge bg-danger fs-6 px-2">{{ r.blood_group }}</span>
+                            </td>
+                            <td class="fw-bold fs-6">
+                                {{ r.units_available }} units
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ r.stock_status|badge_color }}">{{ r.stock_status }}</span>
+                            </td>
+                            {% else %}
+                            <td class="fw-bold text-danger fs-6">
+                                {{ r.total_units }} units
+                            </td>
+                            {% endif %}
+                            <td class="text-end pe-3">
+                                <a href="{{ url_for('availability.facility_detail', facility_id=r.facility_id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-hospital me-1"></i> Details & Stock
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-hospital text-muted display-3 mb-3 d-block"></i>
+                <h5 class="fw-bold text-secondary">No Facilities Matched Your Criteria</h5>
+                <p class="text-muted small mb-3">Try adjusting your filters, selecting a different city, or removing the stock status constraint.</p>
+                <a href="{{ url_for('availability.browse_availability') }}" class="btn btn-outline-rose btn-sm">Reset All Filters</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

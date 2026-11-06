@@ -1,0 +1,50 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Register : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6">
+        <div class="card p-4 shadow-sm border-0">
+            <div class="text-center mb-4">
+                <span class="fs-1">🩸</span>
+                <h4 class="fw-bold text-dark mt-2">Create an Account</h4>
+                <p class="text-muted small">Register as a user or hospital facility manager.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Full Name</label>
+                    <input type="text" name="name" class="form-control" value="{{ name or '' }}" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ email or '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Account Role</label>
+                    <select name="role" class="form-select">
+                        <option value="USER" {% if role == 'USER' %}selected{% endif %}>Individual / Patient (Standard User)</option>
+                        <option value="HOSPITAL" {% if role == 'HOSPITAL' %}selected{% endif %}>Hospital / Blood Bank Facility Manager</option>
+                    </select>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Password</label>
+                        <input type="password" name="password" class="form-control" required minlength="6">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Confirm Password</label>
+                        <input type="password" name="confirm_password" class="form-control" required minlength="6">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-rose w-100 py-2 fw-semibold">Register Account</button>
+            </form>
+
+            <div class="text-center mt-3 pt-2">
+                <span class="text-muted small">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-danger fw-semibold">Sign In</a></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

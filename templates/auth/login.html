@@ -1,0 +1,58 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Sign In : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-5">
+        <div class="card p-4 shadow-sm border-0">
+            <div class="text-center mb-4">
+                <span class="fs-1">🩸</span>
+                <h4 class="fw-bold text-dark mt-2">Sign In to BioPrint Vision</h4>
+                <p class="text-muted small">Access your analyses, reports, and healthcare support tools.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Email Address</label>
+                    <input type="email" name="email" id="inputEmail" class="form-control" value="{{ email or '' }}" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Password</label>
+                    <input type="password" name="password" id="inputPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-rose w-100 py-2 fw-semibold">Sign In</button>
+            </form>
+
+            <!-- Quick Demo Credential Buttons -->
+            <div class="mt-4 pt-3 border-top">
+                <span class="text-muted small fw-semibold d-block mb-2 text-center">Quick Demo Accounts:</span>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillCreds('user@example.com', 'UserPassword@123')">
+                        <i class="bi bi-person me-1"></i> Patient / User (user@example.com)
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="fillCreds('hospital@citygeneral.local', 'HospitalPassword@123')">
+                        <i class="bi bi-hospital me-1"></i> Hospital Manager (hospital@citygeneral.local)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="fillCreds('admin@bioprint.local', 'AdminPassword@123')">
+                        <i class="bi bi-shield-lock me-1"></i> Administrator (admin@bioprint.local)
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center mt-3 pt-2">
+                <span class="text-muted small">Don't have an account? <a href="{{ url_for('auth.register') }}" class="text-danger fw-semibold">Register</a></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function fillCreds(email, pwd) {
+    document.getElementById('inputEmail').value = email;
+    document.getElementById('inputPassword').value = pwd;
+}
+</script>
+{% endblock %}

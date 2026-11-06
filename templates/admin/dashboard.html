@@ -1,0 +1,172 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Admin Overview : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <div class="badge bg-dark text-uppercase mb-1">System Administration</div>
+            <h2 class="h3 fw-bold mb-0">Platform Overview & Metrics</h2>
+            <p class="text-muted small mb-0">High-level telemetry, account administration, and biometric audit logs</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.manage_rules') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-sliders me-1"></i> System Rules
+            </a>
+            <a href="{{ url_for('admin.add_facility') }}" class="btn btn-rose">
+                <i class="bi bi-plus-lg me-1"></i> Add Medical Facility
+            </a>
+        </div>
+    </div>
+
+    <!-- Stat KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Total Accounts</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ stats.users_count }}</h2>
+                    </div>
+                    <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top">
+                    <a href="{{ url_for('admin.manage_users') }}" class="small text-decoration-none text-primary">Manage Users &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Registered Facilities</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ stats.facilities_count }}</h2>
+                    </div>
+                    <div class="bg-success-subtle text-success p-3 rounded-circle">
+                        <i class="bi bi-building-fill fs-3"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top">
+                    <a href="{{ url_for('admin.manage_facilities') }}" class="small text-decoration-none text-success">View Facilities &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Fingerprint Analyses</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ stats.analyses_count }}</h2>
+                    </div>
+                    <div class="bg-danger-subtle text-danger p-3 rounded-circle">
+                        <i class="bi bi-fingerprint fs-3"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top">
+                    <a href="{{ url_for('admin.list_all_analyses') }}" class="small text-decoration-none text-danger">Audit Logs &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">PDF Reports Issued</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ stats.reports_count }}</h2>
+                    </div>
+                    <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                        <i class="bi bi-file-earmark-pdf-fill fs-3"></i>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top">
+                    <span class="small text-muted">Auto-archived</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Analyses & Users Row -->
+    <div class="row g-4">
+        <!-- Recent Analyses (Left) -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-journal-text me-2 text-danger"></i>Recent Biometric Predictions
+                    </h5>
+                    <a href="{{ url_for('admin.list_all_analyses') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Mode</th>
+                                    <th>Result</th>
+                                    <th>Confidence</th>
+                                    <th class="text-end pe-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in recent_analyses %}
+                                <tr>
+                                    <td class="ps-3 fw-bold">#{{ a.id }}</td>
+                                    <td class="small">{{ a.user.email if a.user else 'N/A' }}</td>
+                                    <td class="small text-muted">{{ a.created_at.strftime('%m-%d %H:%M') }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ a.mode }}</span></td>
+                                    <td><span class="badge bg-danger">{{ a.final_blood_group }}</span></td>
+                                    <td class="fw-semibold">{{ "%.1f"|format(a.final_confidence) }}%</td>
+                                    <td class="text-end pe-3">
+                                        <a href="{{ url_for('analysis.view_analysis', analysis_id=a.id) }}" class="btn btn-sm btn-outline-primary py-0">View</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="7" class="text-center py-4 text-muted">No analyses recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Users (Right) -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-person-lines-fill me-2 text-primary"></i>Recently Registered Accounts
+                    </h5>
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-sm btn-outline-secondary">Manage</a>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for u in recent_users %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <div class="fw-semibold text-dark">{{ u.name }}</div>
+                                <div class="text-muted small">{{ u.email }}</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary mb-1 d-block">{{ u.role }}</span>
+                                <span class="badge bg-{{ u.status|badge_color }} small">{{ u.status }}</span>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center py-4 text-muted">No users registered.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

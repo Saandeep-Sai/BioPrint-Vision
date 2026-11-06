@@ -1,0 +1,21 @@
+﻿{% extends "base.html" %}
+
+{% block title %}404 Page Not Found : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5" style="max-width: 600px;">
+    <div class="display-1 fw-bold text-danger mb-2">404</div>
+    <h3 class="fw-bold mb-3">Resource or Page Not Found</h3>
+    <p class="text-muted mb-4">
+        The biometric record, facility, or healthcare resource you requested could not be located on the server.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('main.index') }}" class="btn btn-rose">
+            <i class="bi bi-house me-1"></i> Return Home
+        </a>
+        <a href="{{ url_for('analysis.history') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i> My History
+        </a>
+    </div>
+</div>
+{% endblock %}

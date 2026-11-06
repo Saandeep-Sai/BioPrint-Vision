@@ -1,0 +1,223 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Blood Donor Pre-Screening : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="mb-4">
+        <h2 class="h3 fw-bold mb-1">Blood Donor Pre-Screening Questionnaire</h2>
+        <p class="text-muted small mb-0">Evaluate donor safety and initial eligibility based on WHO and National Blood Transfusion Council guidelines.</p>
+    </div>
+
+    <!-- Mandatory Disclaimer Banner -->
+    <div class="alert alert-warning border-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill text-warning fs-4 me-3"></i>
+        <div class="small">
+            <strong>PRE-SCREENING NOTICE:</strong> This self-assessment tool provides preliminary guidance. Official eligibility requires on-site clinical evaluation, blood pressure measurement, and certified copper-sulfate / hemoglobin testing conducted by medical staff at a licensed blood bank.
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Question Form (Left) -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-clipboard2-pulse text-danger me-2"></i>Donor Health Questionnaire
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('donor.donor_screening') }}">
+                        <!-- Quantitative Parameters -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Age (Years) <span class="text-danger">*</span></label>
+                                <input type="number" name="age" class="form-control" placeholder="e.g. 25" min="15" max="100" required value="{{ answers.get('age', '') }}">
+                                <div class="form-text">Standard range: 18 - 65 years.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Weight (kg) <span class="text-danger">*</span></label>
+                                <input type="number" name="weight" step="0.5" class="form-control" placeholder="e.g. 68" min="30" max="250" required value="{{ answers.get('weight', '') }}">
+                                <div class="form-text">Minimum requirement: 50 kg (110 lbs).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Hemoglobin (g/dL) <span class="text-muted">(Optional)</span></label>
+                                <input type="number" step="0.1" name="hemoglobin" class="form-control" placeholder="e.g. 13.5" min="5" max="25" value="{{ answers.get('hemoglobin', '') }}">
+                                <div class="form-text">Standard: ≥12.5 g/dL (female) / ≥13.0 g/dL (male).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Days Since Last Donation <span class="text-muted">(If applicable)</span></label>
+                                <input type="number" name="days_since_last_donation" class="form-control" placeholder="e.g. 120" min="0" value="{{ answers.get('days_since_last_donation', '') }}">
+                                <div class="form-text">Standard minimum interval: 90 days (whole blood).</div>
+                            </div>
+                        </div>
+
+                        <hr class="text-muted my-4">
+
+                        <!-- Clinical Conditions & Deferrals -->
+                        <h6 class="fw-bold text-secondary text-uppercase small mb-3">Clinical Screening & Recent Procedures</h6>
+                        <div class="vstack gap-3 mb-4">
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="recent_tattoo" id="chk_tattoo" {% if answers.get('recent_tattoo_or_piercing') %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="chk_tattoo">
+                                    Tattoo, body piercing, or acupuncture in the past 6 months
+                                    <div class="text-muted small fw-normal">Standard 6-month deferral applies to prevent window-period hepatitis/HIV transmission.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="recent_surgery" id="chk_surgery" {% if answers.get('recent_major_surgery') %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="chk_surgery">
+                                    Major surgical operation or dental extraction in the past 6 months
+                                    <div class="text-muted small fw-normal">Requires recovery and medical review prior to donation.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="active_infection" id="chk_infection" {% if answers.get('active_infection_or_antibiotics') %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="chk_infection">
+                                    Active fever, cold, flu symptoms, or currently taking antibiotics
+                                    <div class="text-muted small fw-normal">Donation is deferred until complete recovery and conclusion of antibiotic course.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="pregnant" id="chk_pregnant" {% if answers.get('pregnant_or_lactating') %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="chk_pregnant">
+                                    Currently pregnant, given birth in the past 12 months, or breastfeeding
+                                    <div class="text-muted small fw-normal">Standard deferral during pregnancy and lactation to preserve maternal iron reserves.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="chronic" id="chk_chronic" {% if answers.get('chronic_conditions') %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="chk_chronic">
+                                    History of chronic cardiac disease, diabetes on insulin, cancer, or kidney disorder
+                                    <div class="text-muted small fw-normal">Requires specific physician assessment.</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="reset" class="btn btn-outline-secondary">Reset Form</button>
+                            <button type="submit" class="btn btn-rose px-4 py-2">
+                                <i class="bi bi-shield-check me-1"></i> Evaluate Eligibility
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screening Results (Right) -->
+        <div class="col-lg-5">
+            {% if evaluation %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">Evaluation Result</h5>
+                    <span class="badge bg-{{ evaluation.status_color }} fs-6 px-3">{{ evaluation.status }}</span>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Critical Deferrals -->
+                    {% if evaluation.critical_deferrals %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-danger text-uppercase small mb-2">
+                            <i class="bi bi-x-octagon-fill me-1"></i>Exclusion Criteria / Temporary Deferrals:
+                        </h6>
+                        <ul class="list-group list-group-flush border rounded">
+                            {% for deferral in evaluation.critical_deferrals %}
+                            <li class="list-group-item list-group-item-danger small py-2">
+                                <i class="bi bi-exclamation-circle me-1"></i> {{ deferral }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Warnings / Pre-requisites -->
+                    {% if evaluation.warnings %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-warning text-uppercase small mb-2">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Points for Medical Review:
+                        </h6>
+                        <ul class="list-group list-group-flush border rounded">
+                            {% for warn in evaluation.warnings %}
+                            <li class="list-group-item list-group-item-warning small py-2">
+                                <i class="bi bi-info-circle me-1"></i> {{ warn }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Recommendations -->
+                    {% if evaluation.recommendations %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary text-uppercase small mb-2">
+                            <i class="bi bi-lightbulb-fill me-1"></i>Recommendations:
+                        </h6>
+                        <ul class="list-group list-group-flush border rounded">
+                            {% for rec in evaluation.recommendations %}
+                            <li class="list-group-item small py-2">
+                                <i class="bi bi-check2 text-success me-1"></i> {{ rec }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if evaluation.is_eligible %}
+                    <div class="text-center p-3 bg-success bg-opacity-10 border border-success rounded">
+                        <i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i>
+                        <h6 class="fw-bold text-success mb-1">Pre-Screening Passed!</h6>
+                        <p class="small text-muted mb-3">You meet basic demographic and interval standards for voluntary whole blood donation.</p>
+                        <a href="{{ url_for('availability.browse_availability') }}" class="btn btn-success btn-sm px-4">
+                            Locate Nearest Blood Bank
+                        </a>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% else %}
+            <!-- Initial Instruction Card -->
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body p-4">
+                    <i class="bi bi-person-check-fill text-muted display-3 mb-3 d-block"></i>
+                    <h5 class="fw-bold text-secondary mb-2">Complete the Questionnaire</h5>
+                    <p class="text-muted small mb-0">Fill in your age, weight, and clinical history to receive an immediate deterministic eligibility assessment and preparation checklist.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Preparation Checklist Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-cup-hot text-danger me-2"></i>Day-of-Donation Guidelines
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-check2-circle text-success fs-5 me-2"></i>
+                            <div><strong>Hydrate Thoroughly:</strong> Drink at least 500 mL of water or fruit juice 1-2 hours before donation.</div>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-check2-circle text-success fs-5 me-2"></i>
+                            <div><strong>Eat a Nutritious Meal:</strong> Avoid fatty foods, but do not donate on an empty stomach.</div>
+                        </li>
+                        <li class="d-flex align-items-start">
+                            <i class="bi bi-check2-circle text-success fs-5 me-2"></i>
+                            <div><strong>Bring Photo Identification:</strong> Government-issued ID (Aadhaar, Driver's License, or Passport).</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

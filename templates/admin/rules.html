@@ -1,0 +1,82 @@
+﻿{% extends "base.html" %}
+
+{% block title %}System Rules Configuration : BioPrint Vision Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 850px;">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Rules Configuration</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">Platform Business Rules</h2>
+            <p class="text-muted small mb-0">Configure rare blood group alert triggers and hospital stock threshold logic</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Admin Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-sliders text-danger me-2"></i>Runtime Configuration
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('admin.manage_rules') }}">
+                <!-- Rare Blood Groups Selection -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-1">Rare Blood Groups Classification</label>
+                    <p class="text-muted small mb-3">Checked blood groups will automatically trigger clinical alert cards and priority donor notifications upon prediction.</p>
+                    <div class="row g-2">
+                        {% for bg in all_groups %}
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-check p-3 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" name="rare_groups" value="{{ bg }}" id="chk_{{ bg }}" {% if bg in rare_groups %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="chk_{{ bg }}">
+                                    {{ bg }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <hr class="text-muted my-4">
+
+                <!-- Stock Thresholds -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-1">Inventory Level Classification Thresholds</label>
+                    <p class="text-muted small mb-3">Defines the boundary between 'Available', 'Low Stock', and 'Critical Shortage' statuses across all registered blood banks.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Available Minimum Threshold (Units)</label>
+                            <input type="number" name="avail_threshold" class="form-control" value="{{ avail_thresh }}" min="1" max="100" required>
+                            <div class="form-text">Units ≥ this value are marked as <strong>Available (Green)</strong>.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Low Stock Threshold (Units)</label>
+                            <input type="number" name="low_threshold" class="form-control" value="{{ low_thresh }}" min="1" max="50" required>
+                            <div class="form-text">Units between this value and Available threshold are marked as <strong>Low Stock (Yellow)</strong>. Units &lt; this are <strong>Critical (Red)</strong>.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-rose px-5 py-2">
+                        <i class="bi bi-check2-circle me-1"></i> Update System Rules
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

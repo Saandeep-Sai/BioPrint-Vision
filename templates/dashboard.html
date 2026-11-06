@@ -1,0 +1,161 @@
+﻿{% extends "base.html" %}
+
+{% block title %}User Dashboard : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold text-dark mb-1">Welcome back, {{ user.name }}</h2>
+        <p class="text-muted mb-0">Overview of your biometric analyses, reports, and blood availability tools.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-rose px-4 py-2 shadow-sm">
+            <i class="bi bi-fingerprint me-2"></i> New Analysis
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="p-3 bg-danger-subtle rounded text-danger fs-3 me-3">
+                    <i class="bi bi-fingerprint"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Total Analyses Run</div>
+                    <div class="fs-3 fw-bold text-dark">{{ total_analyses }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="p-3 bg-primary-subtle rounded text-primary fs-3 me-3">
+                    <i class="bi bi-hospital"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Active Blood Facilities</div>
+                    <div class="fs-3 fw-bold text-dark">{{ facility_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="p-3 bg-success-subtle rounded text-success fs-3 me-3">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Latest Predicted Group</div>
+                    <div class="fs-3 fw-bold text-dark">{{ latest_analysis.final_blood_group if latest_analysis else 'None Yet' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Tools Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <a href="{{ url_for('analysis.new_analysis') }}" class="text-decoration-none">
+            <div class="card h-100 p-3 text-center border-0 bg-white hover-shadow transition">
+                <div class="fs-2 text-danger mb-2"><i class="bi bi-camera"></i></div>
+                <h6 class="fw-bold text-dark mb-1">New Analysis</h6>
+                <p class="text-muted small mb-0">Upload 1 photo with single or multiple fingerprints</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('availability.browse_availability') }}" class="text-decoration-none">
+            <div class="card h-100 p-3 text-center border-0 bg-white hover-shadow transition">
+                <div class="fs-2 text-primary mb-2"><i class="bi bi-search"></i></div>
+                <h6 class="fw-bold text-dark mb-1">Blood Availability</h6>
+                <p class="text-muted small mb-0">Locate blood banks & hospital demo stock by city</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('donor.compatibility_explorer') }}" class="text-decoration-none">
+            <div class="card h-100 p-3 text-center border-0 bg-white hover-shadow transition">
+                <div class="fs-2 text-success mb-2"><i class="bi bi-arrow-left-right"></i></div>
+                <h6 class="fw-bold text-dark mb-1">Compatibility Guide</h6>
+                <p class="text-muted small mb-0">ABO/Rh transfusion receiver and donor matching</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('donor.donor_screening') }}" class="text-decoration-none">
+            <div class="card h-100 p-3 text-center border-0 bg-white hover-shadow transition">
+                <div class="fs-2 text-warning mb-2"><i class="bi bi-heart-pulse"></i></div>
+                <h6 class="fw-bold text-dark mb-1">Donor Pre-Screening</h6>
+                <p class="text-muted small mb-0">Check donation readiness via rapid questionnaire</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Analyses Table -->
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-danger"></i>Recent Analyses</h5>
+        <a href="{{ url_for('analysis.history') }}" class="btn btn-outline-secondary btn-sm">View All History</a>
+    </div>
+
+    {% if recent_analyses %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Analysis ID</th>
+                    <th>Date & Time</th>
+                    <th>Mode</th>
+                    <th>Predicted Group</th>
+                    <th>Confidence</th>
+                    <th>Fingers Analyzed</th>
+                    <th>Agreement</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in recent_analyses %}
+                <tr>
+                    <td><code>#{{ a.id }}</code></td>
+                    <td>{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <span class="badge bg-secondary-subtle text-secondary border">
+                            {{ a.mode.capitalize() }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="fs-5 fw-bold text-danger">{{ a.final_blood_group }}</span>
+                    </td>
+                    <td>
+                        <span class="fw-semibold">{{ a.final_confidence }}%</span>
+                    </td>
+                    <td>{{ a.fingerprints_analyzed }} of {{ a.fingerprints_detected }}</td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border">{{ a.agreement_percentage }}%</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('analysis.view_analysis', analysis_id=a.id) }}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-eye"></i> View Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <div class="fs-1 mb-2"><i class="bi bi-folder2-open"></i></div>
+        <p>No analyses performed yet. Click below to begin your first test.</p>
+        <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-rose btn-sm">Start First Analysis</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

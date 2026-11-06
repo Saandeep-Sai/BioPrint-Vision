@@ -1,0 +1,21 @@
+﻿{% extends "base.html" %}
+
+{% block title %}500 Internal Server Error : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5" style="max-width: 600px;">
+    <div class="display-1 fw-bold text-danger mb-2">500</div>
+    <h3 class="fw-bold mb-3">Internal Server Error</h3>
+    <p class="text-muted mb-4">
+        An unexpected error occurred while processing your biometric request. Our engineering team has recorded this event.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('main.index') }}" class="btn btn-rose">
+            <i class="bi bi-house me-1"></i> Return Home
+        </a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Manage Blood Stock : {{ facility.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('hospital.dashboard') }}">Hospital Portal</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Inventory Management</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">Update Blood Stock Units</h2>
+            <p class="text-muted small mb-0">{{ facility.name }} &bull; Changes will immediately update public directory search levels</p>
+        </div>
+        <div>
+            <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-pencil-square text-danger me-2"></i>Edit Stock On-Hand
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('hospital.manage_inventory') }}">
+                <div class="row g-4">
+                    {% for item in inventory %}
+                    <div class="col-md-3 col-sm-6">
+                        <div class="border rounded p-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger fs-6 px-3 py-1">{{ item.blood_group }}</span>
+                                <span class="badge bg-{{ item.stock_status|badge_color }} small">
+                                    {{ item.stock_status }}
+                                </span>
+                            </div>
+                            <label class="form-label small fw-semibold text-secondary">Available Units</label>
+                            <input type="number" 
+                                   name="units_{{ item.blood_group }}" 
+                                   class="form-control form-control-lg fw-bold" 
+                                   value="{{ item.units_available }}" 
+                                   min="0" 
+                                   max="1000" 
+                                   required>
+                            <div class="form-text small">
+                                ≥8: Available &bull; 1-7: Low &bull; 0: Critical
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="text-muted my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-rose px-5 py-2">
+                        <i class="bi bi-save me-1"></i> Save Inventory Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

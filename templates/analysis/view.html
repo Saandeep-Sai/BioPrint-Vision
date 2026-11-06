@@ -1,0 +1,362 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Analysis #{{ analysis.id }} : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <!-- Top Action / Breadcrumb Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('analysis.history') }}">Analysis History</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Record #{{ analysis.id }}</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">Biometric Blood Group Analysis</h2>
+            <p class="text-muted small mb-0">Recorded on {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p UTC') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if report %}
+            <a href="{{ url_for('reports.download_report', report_id=report.id) }}" class="btn btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Report
+            </a>
+            {% endif %}
+            <a href="{{ url_for('assistant.chat_view', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-robot me-1"></i> Ask AI Assistant
+            </a>
+            <a href="{{ url_for('analysis.new_analysis') }}" class="btn btn-rose">
+                <i class="bi bi-plus-lg me-1"></i> New Analysis
+            </a>
+        </div>
+    </div>
+
+    <!-- Mandatory PRD Disclaimer Card -->
+    <div class="alert alert-warning border-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="bi bi-shield-exclamation fs-3 text-warning me-3"></i>
+        <div class="small">
+            <strong>RESEARCH PROTOTYPE DISCLAIMER:</strong> This prediction is produced by an experimental ResNet-50 biometric convolutional model (Test Accuracy: 87.78%, Top-2: 98.00%). It is strictly for technological research and preliminary screening. <strong>It MUST NOT be used as a substitute for certified agglutination or clinical laboratory blood typing prior to any medical transfusion or intervention.</strong>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Primary Prediction & Visuals -->
+        <div class="col-lg-7">
+            <!-- Main Result Card -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-droplet-half text-danger me-2"></i>Automated Prediction Summary
+                    </h5>
+                    <span class="badge bg-light text-dark border">Mode: {{ analysis.mode|capitalize }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center text-center text-md-start">
+                        <div class="col-md-5 mb-3 mb-md-0 text-center border-end">
+                            <div class="display-1 fw-bold text-danger mb-1">{{ analysis.final_blood_group }}</div>
+                            <div class="badge bg-danger fs-6 px-3 py-1 mb-2">Predicted Blood Group</div>
+                            <div class="text-muted small">
+                                Model Confidence: <strong>{{ "%.2f"|format(analysis.final_confidence) }}%</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-7 ps-md-4">
+                            <h6 class="fw-semibold text-secondary text-uppercase small mb-3">Multi-Print Sheet Metrics</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Fingerprints Detected:</span>
+                                    <span class="fw-bold">{{ analysis.fingerprints_detected }}</span>
+                                </li>
+                                <li class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Fingerprints Analyzed:</span>
+                                    <span class="fw-bold text-success">{{ analysis.fingerprints_analyzed }}</span>
+                                </li>
+                                <li class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Excluded (Low Quality):</span>
+                                    <span class="fw-bold {% if analysis.fingerprints_excluded > 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        {{ analysis.fingerprints_excluded }}
+                                    </span>
+                                </li>
+                                <li class="d-flex justify-content-between py-1">
+                                    <span class="text-muted">Intra-Sheet Agreement:</span>
+                                    <span>
+                                        {% if analysis.agreement_percentage >= 80 %}
+                                            <span class="badge bg-success">{{ "%.1f"|format(analysis.agreement_percentage) }}% High</span>
+                                        {% elif analysis.agreement_percentage >= 50 %}
+                                            <span class="badge bg-warning text-dark">{{ "%.1f"|format(analysis.agreement_percentage) }}% Moderate</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ "%.1f"|format(analysis.agreement_percentage) }}% Disagree</span>
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uploaded & Annotated Images -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-images me-2 text-primary"></i>Biometric Imaging Pipeline
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-{% if analysis.annotated_image_path %}6{% else %}12{% endif %} text-center">
+                            <p class="fw-semibold text-muted small mb-2">Original Capture</p>
+                            <div class="border rounded p-2 bg-light d-flex align-items-center justify-content-center" style="min-height: 220px;">
+                                <img src="{{ url_for('static', filename=analysis.image_path) }}" alt="Original Fingerprint" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: contain;">
+                            </div>
+                        </div>
+                        {% if analysis.annotated_image_path %}
+                        <div class="col-md-6 text-center">
+                            <p class="fw-semibold text-muted small mb-2">Automated Multi-Print Detection & Crops</p>
+                            <div class="border rounded p-2 bg-light d-flex align-items-center justify-content-center" style="min-height: 220px;">
+                                <img src="{{ url_for('static', filename=analysis.annotated_image_path) }}" alt="Annotated Regions" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: contain;">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual Detected Fingerprints Table -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-fingerprint me-2 text-danger"></i>Individual Fingerprint Breakdown
+                    </h5>
+                    <span class="text-muted small">{{ analysis.fingerprints|length }} Region(s)</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>Isolated Crop</th>
+                                    <th>Grad-CAM Heatmap</th>
+                                    <th>Prediction</th>
+                                    <th>Confidence</th>
+                                    <th>Quality Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fp in analysis.fingerprints %}
+                                <tr>
+                                    <td class="ps-3 fw-bold">#{{ fp.finger_number }}</td>
+                                    <td>
+                                        {% if fp.crop_image_path %}
+                                        <img src="{{ url_for('static', filename=fp.crop_image_path) }}" class="rounded border" style="width: 55px; height: 55px; object-fit: cover;" alt="Crop">
+                                        {% else %}
+                                        <span class="text-muted small">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if fp.gradcam_image_path %}
+                                        <img src="{{ url_for('static', filename=fp.gradcam_image_path) }}" class="rounded border" style="width: 55px; height: 55px; object-fit: cover;" alt="Heatmap">
+                                        {% else %}
+                                        <span class="text-muted small">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary fs-6">{{ fp.prediction }}</span>
+                                    </td>
+                                    <td class="fw-semibold">
+                                        {{ "%.1f"|format(fp.confidence) }}%
+                                    </td>
+                                    <td>
+                                        <div class="small fw-semibold">{{ "%.1f"|format(fp.quality_score) }}/100</div>
+                                        <span class="badge bg-{{ fp.quality_status|badge_color }} text-capitalize" style="font-size: 0.7rem;">
+                                            {{ fp.quality_status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if fp.included_in_aggregation %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aggregated</span>
+                                        {% else %}
+                                            <span class="badge bg-danger" title="{{ fp.exclusion_reason or 'Excluded' }}">
+                                                <i class="bi bi-x-circle me-1"></i>Excluded
+                                            </span>
+                                            {% if fp.exclusion_reason %}
+                                            <div class="text-danger small" style="font-size: 0.7rem;">{{ fp.exclusion_reason }}</div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Healthcare Decision Support, Compatibility, Facilities -->
+        <div class="col-lg-5">
+            <!-- Rare Blood Alert Card -->
+            {% if rarity and rarity.is_rare %}
+            <div class="card mb-4 border-danger shadow-sm bg-danger bg-opacity-10">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-exclamation-octagon-fill text-danger fs-2 me-3"></i>
+                        <div>
+                            <h5 class="fw-bold text-danger mb-1">{{ rarity.badge }}</h5>
+                            <p class="small text-dark mb-2">{{ rarity.rarity_description }}</p>
+                            <div class="bg-white p-2 rounded border border-danger-subtle small mb-3">
+                                <strong>Transfusion Note:</strong> {{ rarity.transfusion_significance }}
+                            </div>
+                            <div class="alert alert-danger py-2 px-3 small mb-0">
+                                <i class="bi bi-info-circle me-1"></i> {{ rarity.recommendation }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ABO / Rh Compatibility Engine Summary -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-arrow-left-right text-success me-2"></i>Clinical Compatibility
+                    </h5>
+                    <a href="{{ url_for('donor.compatibility_explorer', blood_group=analysis.final_blood_group) }}" class="btn btn-sm btn-outline-secondary">Full Matrix</a>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Red Cell Donation -->
+                    <div class="mb-4">
+                        <div class="text-muted small fw-semibold text-uppercase mb-2">Can Donate Red Cells To:</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for recipient in compatibility.red_cells.can_donate_to %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1">{{ recipient }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Red Cell Receiving -->
+                    <div class="mb-4">
+                        <div class="text-muted small fw-semibold text-uppercase mb-2">Can Receive Red Cells From:</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for donor_group in compatibility.red_cells.can_receive_from %}
+                            <span class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-1">{{ donor_group }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <hr class="text-muted">
+
+                    <!-- Plasma Donation & Receiving -->
+                    <div class="row g-2 small">
+                        <div class="col-6">
+                            <span class="text-muted d-block fw-semibold">Plasma Donate:</span>
+                            <span>{{ compatibility.plasma.can_donate_to|join(', ') }}</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted d-block fw-semibold">Plasma Receive:</span>
+                            <span>{{ compatibility.plasma.can_receive_from|join(', ') }}</span>
+                        </div>
+                    </div>
+
+                    {% if compatibility.universal_donor %}
+                    <div class="mt-3 badge bg-success-subtle text-success p-2 w-100 text-start">
+                        <i class="bi bi-star-fill me-1"></i> <strong>Universal Red Cell Donor:</strong> O- red cells can be given to all ABO/Rh groups in trauma emergencies.
+                    </div>
+                    {% endif %}
+                    {% if compatibility.universal_recipient %}
+                    <div class="mt-3 badge bg-info-subtle text-primary p-2 w-100 text-start">
+                        <i class="bi bi-star-fill me-1"></i> <strong>Universal Red Cell Recipient:</strong> AB+ individuals can safely receive red cells of any ABO/Rh blood type.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Demo Hospital & Blood Bank Stock Snapshot -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-hospital text-primary me-2"></i>Available {{ analysis.final_blood_group }} Units
+                        </h5>
+                    </div>
+                    <span class="demo-badge">Demo Data</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="p-3 bg-light border-bottom small text-muted">
+                        <i class="bi bi-info-circle me-1"></i> Demo availability snapshot for <strong>{{ analysis.final_blood_group }}</strong>. Not live telemetry.
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for fac in facilities %}
+                        <div class="list-group-item p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="fw-bold mb-0 text-dark">
+                                    <a href="{{ url_for('availability.facility_detail', facility_id=fac.facility_id) }}" class="text-decoration-none text-dark">
+                                        {{ fac.facility_name }}
+                                    </a>
+                                </h6>
+                                <span class="badge bg-{{ fac.stock_status|badge_color }}">{{ fac.stock_status }}</span>
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="bi bi-geo-alt me-1"></i>{{ fac.city }}, {{ fac.address }}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small">
+                                <span class="fw-bold text-danger">{{ fac.units_available }} units available</span>
+                                <span class="text-secondary"><i class="bi bi-telephone me-1"></i>{{ fac.phone }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="p-4 text-center text-muted small">
+                            No facilities currently listed with active inventory for {{ analysis.final_blood_group }}.
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="p-3 text-center border-top">
+                        <a href="{{ url_for('availability.browse_availability', blood_group=analysis.final_blood_group) }}" class="btn btn-outline-rose btn-sm w-100">
+                            Search All Facilities in Directory
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Step Recommendations -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>Recommended Next Steps
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-1-circle-fill text-danger fs-5 me-2"></i>
+                            <div>
+                                <strong>Clinical Confirmation:</strong> Visit a certified diagnostic laboratory for an official agglutination card test before any surgical procedure.
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-2-circle-fill text-danger fs-5 me-2"></i>
+                            <div>
+                                <strong>Donor Screening:</strong> If you plan to donate blood, complete our interactive eligibility questionnaire.
+                                <div class="mt-1">
+                                    <a href="{{ url_for('donor.donor_screening') }}" class="btn btn-sm btn-outline-primary py-0">Take Donor Pre-Screening</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start">
+                            <i class="bi bi-3-circle-fill text-danger fs-5 me-2"></i>
+                            <div>
+                                <strong>Secure Documentation:</strong> Save or download the certified analysis PDF report for your personal research records.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

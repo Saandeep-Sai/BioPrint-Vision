@@ -1,0 +1,161 @@
+﻿{% extends "base.html" %}
+
+{% block title %}About & Technology : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="py-3">
+    <h2 class="fw-bold text-dark mb-1">Architecture & Model Evaluation Baseline</h2>
+    <p class="text-muted">Technical audit, training methodology, and verified performance benchmarks.</p>
+</div>
+
+<!-- Architecture Summary -->
+<div class="card p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-diagram-3 text-danger me-2"></i>End-to-End System Workflow</h5>
+    <div class="p-3 bg-light rounded font-monospace small">
+        Photograph Containing Multiple Fingerprints<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Computer Vision Detection & Segmentation (CLAHE + Otsu + Morphological Filtering)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Individual Fingerprint Crops (F1, F2, F3...)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Quality Assessment (Blur via Laplacian Variance, Contrast, Exposure, Size)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Deterministic Preprocessing (224×224, ImageNet Normalization)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        ResNet-50 Fine-Tuned Backbone + Custom Head (2048 → 1024 → 512 → 128 → 64 → 8)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Raw Probability Vectors Collection (P1, P2... across 8 classes)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Arithmetic Probability Averaging: P_final = (P1 + P2 + ... + PN) / N<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Final Prediction = argmax(P_final) & Aggregated Model Confidence<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Agreement Scoring & Grad-CAM Saliency Overlay (layer4[-1])<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        ABO/Rh Compatibility Engine + Rare Blood Group Alert + Simulated Blood Bank Search<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+        Contextual AI Assistant & Smart PDF Report Generation
+    </div>
+</div>
+
+<!-- Evaluation Metrics Table -->
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-data text-danger me-2"></i>Historical Evaluation Benchmarks (Held-Out Test Set)</h5>
+        <span class="badge bg-secondary">Test Set N = 900</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Blood Group</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>Test Support</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>A+</strong></td>
+                    <td>97.26%</td>
+                    <td>83.53%</td>
+                    <td><strong>89.87%</strong></td>
+                    <td>85 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>A-</strong></td>
+                    <td>85.35%</td>
+                    <td>88.74%</td>
+                    <td><strong>87.01%</strong></td>
+                    <td>151 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>AB+</strong></td>
+                    <td>86.61%</td>
+                    <td>91.51%</td>
+                    <td><strong>88.99%</strong></td>
+                    <td>106 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>AB-</strong></td>
+                    <td>94.79%</td>
+                    <td>79.82%</td>
+                    <td><strong>86.67%</strong></td>
+                    <td>114 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>B+</strong></td>
+                    <td>85.98%</td>
+                    <td>93.88%</td>
+                    <td><strong>89.76%</strong></td>
+                    <td>98 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>B-</strong></td>
+                    <td>92.31%</td>
+                    <td>86.49%</td>
+                    <td><strong>89.30%</strong></td>
+                    <td>111 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>O+</strong></td>
+                    <td>85.19%</td>
+                    <td>89.84%</td>
+                    <td><strong>87.45%</strong></td>
+                    <td>128 samples</td>
+                </tr>
+                <tr>
+                    <td><strong>O-</strong></td>
+                    <td>81.03%</td>
+                    <td>87.85%</td>
+                    <td><strong>84.30%</strong></td>
+                    <td>107 samples</td>
+                </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+                <tr>
+                    <td>Macro Average / Total</td>
+                    <td>88.56%</td>
+                    <td>87.71%</td>
+                    <td>87.92%</td>
+                    <td>900 samples (110 errors)</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<!-- Dataset Provenance & Known Limitations -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-database text-danger me-2"></i>Dataset Audit Summary</h5>
+            <ul class="list-unstyled mb-0 small text-muted">
+                <li class="mb-2"><strong>Total Images:</strong> 6,000 raw BMP bitmap impressions</li>
+                <li class="mb-2"><strong>Classes (8):</strong> A+ (565), A- (1009), AB+ (708), AB- (761), B+ (652), B- (741), O+ (852), O- (712)</li>
+                <li class="mb-2"><strong>Resolution:</strong> 5,956 files at 96×103 pixels, 44 files at 241×298 pixels</li>
+                <li class="mb-2"><strong>Data Integrity:</strong> 0 corrupt files; 15 identical duplicate files across 11 groups identified via MD5 hash analysis.</li>
+                <li><strong>Split Ratio:</strong> Stratified random split into 70% Train (4,199), 15% Val (901), 15% Test (900).</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4 h-100 border-warning">
+            <h5 class="fw-bold mb-3 text-warning-emphasis"><i class="bi bi-shield-exclamation text-warning me-2"></i>Documented Limitations</h5>
+            <ul class="small text-muted mb-0">
+                <li class="mb-2">
+                    <strong>Absence of Subject Identifiers:</strong> The public dataset filenames do not contain person/subject IDs. 
+                    Therefore, cross-subject isolation could not be strictly guaranteed during splitting. Multi-fingerprint averaging is designed to mitigate individual impression noise.
+                </li>
+                <li class="mb-2">
+                    <strong>Confidence Distribution:</strong> The model has a median confidence of 99.32%, meaning it is often confident even when mistaken. The application displays <strong>Model Confidence</strong> rather than diagnostic certainty.
+                </li>
+                <li>
+                    <strong>Simulated Stock:</strong> Hospital availability records are internally consistent synthetic test data tagged with <code>is_demo=True</code>.
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

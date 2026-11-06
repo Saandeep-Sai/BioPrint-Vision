@@ -1,37 +1,63 @@
-# 🩸 BioPrint Vision (V1 Prototype)
+# 🩸 BioPrint Vision (V2 Healthcare & Biometric Platform)
 
-> **Experimental AI-Based Blood-Group Classification from Fingerprint Images**  
-> *Research & Screening Prototype — Not for Clinical Diagnostic Use.*
+> **AI-Powered Fingerprint-to-Blood-Group Classification & Clinical Decision Support System**  
+> *Research & Biometric Screening Platform — Not for Clinical Diagnostic Use.*
 
 ---
 
-## 📌 Project Overview
+## 📌 Platform Overview
 
-**BioPrint Vision** is an end-to-end deep learning prototype designed to investigate correlation patterns between fingerprint minutiae and human ABO/Rh blood groups. The system accepts a digital fingerprint image, runs automated quality assessment, applies standardized preprocessing, executes an ImageNet-pretrained **ResNet-50** deep classifier, and delivers an 8-class probability distribution accompanied by **Grad-CAM** saliency heatmaps via a clean, interactive **Gradio** web application.
+**BioPrint Vision** is an end-to-end computer vision and healthcare support platform that predicts human ABO/Rh blood groups from fingerprint impressions. The platform features two coexisting interfaces powered by the same verified **ResNet-50** deep convolutional checkpoint:
+
+1. **Gradio Standalone Prototype (`app.py` on `http://127.0.0.1:7860`)**: Single-image research interface with instant quality scoring, 8-class softmax distributions, and Grad-CAM interpretability heatmaps.
+2. **Flask Multi-User Web Platform (`run_flask.py` on `http://127.0.0.1:5000`)**: Complete healthcare web application featuring automated multi-fingerprint sheet detection, probability vector averaging, intra-sheet agreement scoring, ABO/Rh transfusion compatibility rules, donor pre-screening questionnaires, synthetic hospital/blood bank inventory search, hospital management portal, admin suite, contextual AI assistant, and ReportLab PDF report generation.
+
+---
+
+## 🏗️ Architecture & Processing Pipeline
 
 ```
-Fingerprint Image (BMP / PNG / JPEG)
-        │
-        ▼
-Validation & Quality Assessment (Sharpness, Contrast, Exposure, Resolution)
-        │
-        ▼
-Preprocessing Pipeline (Resize 224×224, Tensor Conversion, ImageNet Normalization)
-        │
-        ▼
-Deep Convolutional Classifier (ResNet-50 Backbone + Custom MLP Head)
-        │
-        ▼
-Softmax Probability Distribution (8 Blood Groups: A+, A-, AB+, AB-, B+, B-, O+, O-)
-        │
-        ├─────────────────────────────┬─────────────────────────────┐
-        ▼                             ▼                             ▼
-Predicted Blood Group        Model Confidence (%)          Grad-CAM Saliency Map
-        │                             │                             │
-        └─────────────────────────────┴─────────────────────────────┘
-                                      │
-                                      ▼
-                        Gradio Web Interface (Localhost)
+Photograph (Single Fingerprint or Multi-Fingerprint Card)
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Classical CV Region Detection & Segmentation                │
+│ (Grayscale → CLAHE → Otsu Threshold → Morphology → NMS)     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+    Single Fingerprint          Multiple Fingerprints (2+)
+    (Direct Isolation)          (Bounding Box Crops)
+             │                           │
+             └─────────────┬─────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Fingerprint Quality Assessment                              │
+│ (Laplacian Variance, Contrast, Brightness, Dynamic Range)   │
+│ Threshold: Score >= 0.35 required for aggregation           │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ ResNet-50 Inference per Crop (TorchScript / PyTorch)        │
+│ Layer4 Grad-CAM Activation Heatmaps                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Mathematical Aggregation (Raw Softmax Probability Averaging)│
+│                                                             │
+│   P_final = (1 / N) * SUM_{i=1}^N P_i                       │
+│   Final Class = argmax(P_final)                             │
+│   Agreement % = (max_count / N) * 100                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         ▼                 ▼                 ▼
+   Flask Web App     PDF Report Generator   Gradio Prototype
+  (Port 5000)          (ReportLab)            (Port 7860)
 ```
 
 ---
@@ -40,167 +66,116 @@ Predicted Blood Group        Model Confidence (%)          Grad-CAM Saliency Map
 
 > **IMPORTANT:** BioPrint Vision is an **experimental research prototype**. 
 > - It is **NOT** a certified medical diagnostic device.
-> - It does **NOT** diagnose, confirm, or replace standard serological blood-group testing.
-> - High classification accuracy on public datasets does not prove clinical validity or biological causation.
-> - Grad-CAM heatmaps highlight spatial regions of neural network activation, **not** verified medical biomarkers.
-> - **Never base transfusion, donation, or clinical decisions on this software.**
+> - It does **NOT** diagnose, confirm, or replace standard serological agglutination blood tests.
+> - Classification performance reflects statistical correlation on biometric datasets, **not** verified medical causation.
+> - Grad-CAM heatmaps highlight spatial regions of neural network activation, **not** certified biological biomarkers.
+> - **Hospital inventory data is synthetic demonstration data (`is_demo=True`)** and is not connected to live medical inventory.
+> - **Never base transfusion, surgery, or clinical decisions on this software.**
 
 ---
 
-## 📊 Dataset Audit & Provenance
+## 🔬 Deep Learning Model & Benchmark Performance
 
-The model was trained and evaluated on a verified local dataset of **6,000 raw fingerprint images**:
+* **Architecture:** ResNet-50 Backbone with custom dense classification head (2048 → 512 → Dropout(0.4) → 8 classes)
+* **Checkpoint:** `models/best_model.pth` (Epoch 25, Early Stopping)
+* **Exact Class Contract:** `['A+', 'A-', 'AB+', 'AB-', 'B+', 'B-', 'O+', 'O-']`
+* **Dataset Size:** 6,000 raw fingerprint impressions
 
-* **Total Images:** 6,000 bitmap (`.BMP`) files
-* **Target Classes (8):** `A+`, `A-`, `AB+`, `AB-`, `B+`, `B-`, `O+`, `O-`
-* **Integrity:** 0 corrupted or unreadable images
-* **Resolution Profile:** 5,956 images at 96×103 pixels, 44 images at 241×298 pixels
-* **Duplicate Check:** 15 identical files detected across 11 groups (verified via MD5 hashing)
+### Test Set Benchmark (900 Held-Out Samples)
 
-### Class Distribution
-
-| Blood Group | Sample Count | Percentage |
-|:---:|:---:|:---:|
-| **A-** | 1,009 | 16.82% |
-| **O+** | 852 | 14.20% |
-| **AB-** | 761 | 12.68% |
-| **B-** | 741 | 12.35% |
-| **O-** | 712 | 11.87% |
-| **AB+** | 708 | 11.80% |
-| **B+** | 652 | 10.87% |
-| **A+** | 565 | 9.42% |
-| **Total** | **6,000** | **100.0%** |
-
-### ⚠️ Data Leakage & Subject ID Limitation
-The dataset filenames follow a cluster-indexing format (`cluster_X_YYYY.BMP`). **Subject / individual identifiers are NOT available** in this dataset. As a result, the train/validation/test split was performed in a **stratified random manner by image**, not by subject. It is therefore possible that multiple fingerprint impressions from the same individual exist across both the training and test sets. **True subject-independent generalization remains unverified and is documented as a primary limitation.**
-
----
-
-## 🔬 Benchmark Evaluation Results (Held-Out Test Set)
-
-The model was trained for 25 epochs using AdamW (`lr=1e-4`), CrossEntropyLoss with class weights, and early stopping. Evaluation was conducted on a **strictly held-out test set of 900 samples (15% split)**:
-
-### Overall Metrics
-
-| Metric | Result | Description |
+| Metric | Score | Description |
 |---|:---:|---|
 | **Test Accuracy** | **87.78%** | 790 of 900 test samples correctly classified |
-| **Top-2 Accuracy** | **98.00%** | Ground truth label is within the top 2 predicted classes |
-| **Macro Precision** | **88.56%** | Unweighted average precision across all 8 classes |
-| **Macro Recall** | **87.71%** | Unweighted average recall across all 8 classes |
+| **Top-2 Accuracy** | **98.00%** | True blood group is within the top 2 model predictions |
+| **Macro Precision** | **88.56%** | Balanced precision across all 8 classes |
+| **Macro Recall** | **87.71%** | Balanced recall across all 8 classes |
 | **Macro F1-Score** | **87.92%** | Harmonic mean of macro precision and recall |
-| **Weighted F1-Score**| **87.79%** | F1-score weighted by class support |
-| **Mean Confidence** | **91.83%** | Average softmax confidence across all test predictions |
-| **Median Confidence**| **99.32%** | Demonstrates sharp confidence distribution |
-| **Misclassified Count** | **110** | 110 of 900 test samples |
-
-### Per-Class Performance
-
-| Class | Precision | Recall | F1-Score | Support |
-|:---:|:---:|:---:|:---:|:---:|
-| **A+**  | 97.26% | 83.53% | **89.87%** | 85 |
-| **A-**  | 85.35% | 88.74% | **87.01%** | 151 |
-| **AB+** | 86.61% | 91.51% | **88.99%** | 106 |
-| **AB-** | 94.79% | 79.82% | **86.67%** | 114 |
-| **B+**  | 85.98% | 93.88% | **89.76%** | 98 |
-| **B-**  | 92.31% | 86.49% | **89.30%** | 111 |
-| **O+**  | 85.19% | 89.84% | **87.45%** | 128 |
-| **O-**  | 81.03% | 87.85% | **84.30%** | 107 |
+| **Weighted F1-Score**| **87.79%** | Support-weighted F1 across classes |
+| **Validation Accuracy**| **91.34%** | Best validation accuracy at Epoch 25 |
 
 ---
 
-## 🛠️ Installation & Setup
+## 🚀 Quickstart & How to Run
 
-### Prerequisites
-* Python 3.10+ (tested on Python 3.11.9)
-* Git
+### 1. Prerequisites & Environment Setup
 
-### 1. Clone & Set Up Virtual Environment
+Ensure the project virtual environment is active:
 
-```bash
-# Clone the repository
-git clone https://github.com/your-username/BioPrint-Vision.git
-cd BioPrint-Vision
-
-# Create and activate virtual environment
-python -m venv .venv
-
-# On Windows (PowerShell):
-.venv\Scripts\Activate.ps1
-
-# On Linux / macOS:
-source .venv/bin/activate
+```powershell
+# Activate virtual environment (Windows PowerShell)
+.\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Install Dependencies
+Or execute commands directly via the virtual environment interpreter:
+`d:\BioPrint-Vision\.venv\Scripts\python.exe`
 
-```bash
-pip install -r requirements.txt
-```
+### 2. Run the Gradio Research Prototype (Port 7860)
 
-*Note: For systems without a dedicated NVIDIA GPU, PyTorch installs with CPU support by default. If a CUDA GPU is present, it will automatically be utilized for inference.*
-
----
-
-## 🚀 Running the Prototype
-
-### 1. Launch the Gradio Web Application (Recommended)
-
-```bash
+```powershell
 python app.py
 ```
-Open your browser at **`http://127.0.0.1:7860`**.
+Open your browser to: **`http://127.0.0.1:7860`**
 
-* Upload any fingerprint image (PNG, JPG, or BMP).
-* Alternatively, click any of the **Sample Fingerprints** in the interface to test instantly.
-* Click **🔬 Analyze Fingerprint** to inspect:
-  * Predicted Blood Group
-  * Model Confidence percentage
-  * Image Quality rating (Score, Status, and detected issues)
-  * Full 8-Class Probability Distribution
-  * Grad-CAM Saliency Heatmap
+### 3. Run the Full Flask Healthcare Platform (Port 5000)
 
-### 2. Run CLI Inference on a Single Image
-
-```bash
-python inference.py --image data/raw/A+/cluster_0_1001.BMP
+```powershell
+python run_flask.py
 ```
-
-### 3. Run the Automated Verification Test Suite
-
-```bash
-python test_pipeline.py
-```
-
-### 4. Run Dataset Audit (Optional)
-
-```bash
-python -m training.audit_dataset --data-dir data/raw --output dataset_audit.json
-```
+Open your browser to: **`http://127.0.0.1:5000`**
 
 ---
 
-## 🧠 Model Architecture & Methodology
+## 🔑 Pre-Configured Demo Accounts
 
-```
-Input Tensor: [Batch, 3, 224, 224]
-  │
-  ├── ResNet-50 Feature Backbone (ImageNet Pretrained)
-  │     ├── conv1, bn1, layer1, layer2 (Frozen during fine-tuning)
-  │     └── layer3, layer4             (Fine-tuned)
-  │
-  ├── AdaptiveAvgPool2d (Output: 2048-dim embedding)
-  │
-  └── Multi-Stage Classification Head (nn.Sequential)
-        ├── Linear(2048 → 1024) → BatchNorm1d → ReLU → Dropout(0.4)
-        ├── Linear(1024 → 512)  → ReLU → Dropout(0.2)
-        ├── Linear(512 → 128)   → ReLU → Dropout(0.1)
-        ├── Linear(128 → 64)    → ReLU
-        └── Linear(64 → 8)      → Logits [A+, A-, AB+, AB-, B+, B-, O+, O-]
-```
+The database includes pre-seeded demo accounts for technical evaluation:
 
-* **Exact Contract Order:** `['A+', 'A-', 'AB+', 'AB-', 'B+', 'B-', 'O+', 'O-']`
-* **Target Layer for Grad-CAM:** `model.layer4[-1]` (last bottleneck residual block)
+| Role | Email Address | Password | Permissions |
+|---|---|---|---|
+| **Admin** | `admin@bioprint.local` | `AdminPassword@123` | Full administrative control, system rules, user management, facility registration, audit logs |
+| **Hospital** | `hospital@citygeneral.local` | `HospitalPassword@123` | Hospital portal, 8-group stock updates, facility contact profile |
+| **Hospital (Alt)** | `bloodbank@metro.local` | `BloodBankPassword@123` | Blood bank facility manager |
+| **User (Patient)**| `user@example.com` | `UserPassword@123` | Fingerprint analysis, history, PDF reports, AI assistant, donor pre-screening |
+
+---
+
+## 🧪 Verification & Test Suites
+
+The repository contains three complete, passing test suites:
+
+### 1. End-to-End Flask Platform Integration Tests
+Validates all routes, authentication, role restrictions, analysis workflow, PDF generation, AI assistant, and admin operations:
+```powershell
+d:\BioPrint-Vision\.venv\Scripts\python.exe tests\test_full_platform.py
+```
+*(11 of 11 tests passing)*
+
+### 2. Multi-Fingerprint Computer Vision & Aggregation Tests
+Validates automated contour detection, bounding box isolation, quality filtering, and probability averaging:
+```powershell
+d:\BioPrint-Vision\.venv\Scripts\python.exe tests\test_multi_fingerprint.py
+```
+*(All tests passing)*
+
+### 3. Baseline Model & Gradio Pipeline Tests
+Validates the frozen ResNet-50 checkpoint, Grad-CAM generation, and Gradio interface:
+```powershell
+d:\BioPrint-Vision\.venv\Scripts\python.exe test_pipeline.py
+```
+*(All tests passing)*
+
+---
+
+## 🗄️ Database Architecture
+
+* **Database Engine:** MySQL 8.x Relational Database (`mysql+pymysql://root:password@localhost/bioprint_vision`).
+* **DDL Schema:** The complete production enterprise database schema is defined in `database/schema.sql`.
+* **Entities:**
+  * `users`: Authentication, bcrypt password hashing, roles (`USER`, `HOSPITAL`, `ADMIN`).
+  * `facilities`: Medical directory with GPS coordinates, contact info, operating hours, and `is_demo=True` tag.
+  * `blood_inventory`: 8 stock records per facility with units available and automated status (`Available`, `Low Stock`, `Critical`, `Unavailable`).
+  * `analyses`: Parent biometric run record (final prediction, confidence, agreement %, mode, image paths).
+  * `fingerprint_results`: Child crop record (crop image, Grad-CAM, quality score, 8-class probabilities, exclusion reason).
+  * `reports`: Generated PDF report metadata and static relative paths.
 
 ---
 
@@ -208,48 +183,67 @@ Input Tensor: [Batch, 3, 224, 224]
 
 ```
 BioPrint-Vision/
-├── app.py                         # Interactive Gradio application
-├── inference.py                   # Standalone inference module & CLI
-├── test_pipeline.py               # Comprehensive verification test suite
-├── requirements.txt               # Minimal pinned dependencies
-├── dataset_audit.json             # Verified dataset audit artifact
-├── README.md                      # Complete project documentation
-├── .gitignore                     # Git ignore rules
+├── app.py                         # FROZEN: Standalone Gradio interface (:7860)
+├── run_flask.py                   # Full Flask platform entrypoint (:5000)
+├── config.py                      # Application configuration & thresholds
+├── requirements.txt               # Pinned Python dependencies
+├── README.md                      # Comprehensive documentation
 │
-├── data/
-│   └── raw/                       # 6,000 raw BMP fingerprint images
-│       ├── A+/ ... O-/            # 8 class directories
+├── database/                      # Database Layer
+│   ├── connection.py              # SQLAlchemy engine initialization
+│   ├── models.py                  # User, Facility, BloodInventory, Analysis, etc.
+│   ├── schema.sql                 # MySQL 8.x production DDL schema
+│   └── seed_demo_data.py          # Demo user & facility seeder (is_demo=True)
 │
-├── models/
-│   ├── best_model.pth             # Trained ResNet-50 checkpoint (Epoch 25)
-│   ├── class_names.json           # Ordered 8-class mapping contract
-│   ├── split_indices.json         # Exact train/val/test indices (reproducibility)
-│   └── training_log.json          # Complete 25-epoch training loss & accuracy history
+├── ml/                            # Machine Learning & CV Engines
+│   ├── multi_fingerprint.py       # Automated multi-print CV splitter & aggregator
+│   └── ...
 │
-├── preprocessing/
-│   ├── __init__.py
-│   ├── image_preprocess.py        # Shared deterministic transform & CLAHE
-│   └── quality.py                 # Image quality assessment (blur, contrast, etc.)
+├── models/                        # ML Checkpoints & Contracts
+│   ├── best_model.pth             # ResNet-50 checkpoint (Epoch 25, 87.78% Test Acc)
+│   ├── class_names.json           # Ordered 8-class array contract
+│   └── split_indices.json         # Train/Val/Test split indices
 │
-├── training/
-│   ├── __init__.py
-│   ├── audit_dataset.py           # Dataset integrity & duplicate audit script
-│   ├── train.py                   # ResNet-50 fine-tuning pipeline
-│   └── evaluate.py                # Test set evaluation & confusion matrix generator
+├── routes/                        # Flask Blueprints
+│   ├── auth.py                    # Login, registration, role guards
+│   ├── main.py                    # Home, about, user dashboard
+│   ├── analysis.py                # Biometric analysis upload, view, REST APIs
+│   ├── availability.py            # Blood stock directory & search APIs
+│   ├── donor.py                   # Compatibility guide & donor pre-screening
+│   ├── reports.py                 # PDF list & secure download
+│   ├── assistant.py               # AI assistant conversational interface
+│   ├── hospital.py                # Hospital manager inventory portal
+│   └── admin.py                   # Admin dashboard, users, facilities, rules
 │
-├── explainability/
-│   ├── __init__.py
-│   └── gradcam.py                 # Grad-CAM saliency generator & overlay blending
+├── services/                      # Healthcare Decision Support Services
+│   ├── compatibility.py           # Deterministic ABO/Rh RBC & plasma matrix
+│   ├── eligibility.py             # Deterministic donor pre-screening rules
+│   ├── inventory.py               # Haversine distance, facility search & stock classifier
+│   ├── rarity.py                  # Rare blood group engine (AB-, B-, O-, A-)
+│   ├── reporting.py               # ReportLab PDF generator
+│   └── assistant.py               # Context-aware non-hallucinating AI chat service
 │
-└── evaluation/
-    ├── metrics.json               # Test metrics (Accuracy: 87.78%, Top-2: 98.00%)
-    ├── confusion_matrix.png       # 8x8 Confusion matrix heatmap
-    ├── classification_report.txt  # Detailed per-class precision/recall/F1 table
-    └── misclassified_samples.json # Record of 110 misclassified test samples
+├── templates/                     # Jinja2 HTML5 Templates (Bootstrap 5)
+│   ├── base.html                  # Responsive shell with navbar, footer & alerts
+│   ├── index.html                 # Platform landing page
+│   ├── about.html                 # Architecture & scientific documentation
+│   ├── dashboard.html             # User control dashboard
+│   ├── analysis/                  # new.html, view.html, history.html
+│   ├── healthcare/                # compatibility.html, donor_screening.html
+│   ├── availability/              # search.html, facility_detail.html
+│   ├── assistant/                 # chat.html
+│   ├── reports/                   # list.html
+│   ├── hospital/                  # dashboard.html, inventory.html, profile.html
+│   ├── admin/                     # dashboard.html, users.html, facilities.html, etc.
+│   └── errors/                    # 404.html, 500.html
+│
+└── tests/                         # Test Suites
+    ├── test_multi_fingerprint.py  # Unit tests for CV detection & probability averaging
+    └── test_full_platform.py      # End-to-end platform integration test suite
 ```
 
 ---
 
-## ⚖️ License & Ethical Use
+## ⚖️ License & Ethical Conduct
 
-This project is released under the **MIT License**. It is strictly intended for scientific investigation, biometric research, and computer vision education. Commercial medical claims or clinical deployment without rigorous independent prospective validation and regulatory approval are prohibited.
+This project is licensed under the **MIT License**. It is strictly intended for scientific investigation, biometric research, and computer vision education. Commercial medical claims or clinical deployment without prospective clinical trials and regulatory certification are prohibited.

@@ -1,0 +1,117 @@
+﻿{% extends "base.html" %}
+
+{% block title %}{{ facility.name }} : BioPrint Vision{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('availability.browse_availability') }}">Directory</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ facility.name }}</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">{{ facility.name }}</h2>
+            <p class="text-muted small mb-0">{{ facility.type }} &bull; {{ facility.city }}, {{ facility.state or 'India' }}</p>
+        </div>
+        <div>
+            <a href="{{ url_for('availability.browse_availability') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Directory
+            </a>
+        </div>
+    </div>
+
+    <!-- Mandatory Demo Banner -->
+    <div class="alert alert-warning border-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill text-warning fs-4 me-3"></i>
+        <div class="small">
+            <strong>SYNTHETIC DEMONSTRATION NOTICE:</strong> {{ demo_notice }} Stock numbers are simulated for technical evaluation.
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Facility Info Profile (Left) -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-building text-primary me-2"></i>Facility Information
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <span class="text-muted small fw-semibold d-block">Facility Type:</span>
+                        <span class="badge bg-light text-dark border">{{ facility.type }}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small fw-semibold d-block">Address:</span>
+                        <div>{{ facility.address }}</div>
+                        <div class="text-muted small">{{ facility.city }}, {{ facility.state or '' }} {{ facility.pincode or '' }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small fw-semibold d-block">Contact Phone:</span>
+                        <div class="fw-bold"><i class="bi bi-telephone text-primary me-1"></i>{{ facility.phone }}</div>
+                    </div>
+
+                    {% if facility.email %}
+                    <div class="mb-3">
+                        <span class="text-muted small fw-semibold d-block">Email Address:</span>
+                        <div><i class="bi bi-envelope text-primary me-1"></i>{{ facility.email }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <span class="text-muted small fw-semibold d-block">Operating Hours:</span>
+                        <div><i class="bi bi-clock text-primary me-1"></i>{{ facility.operating_hours or '24/7' }}</div>
+                    </div>
+
+                    <hr class="text-muted my-3">
+
+                    <div class="d-grid gap-2">
+                        <a href="tel:{{ facility.phone }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-telephone-outbound me-1"></i> Call Facility Desk
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8-Group Blood Stock Levels (Right) -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-droplet-half text-danger me-2"></i>Current Blood Stock Levels
+                    </h5>
+                    <span class="demo-badge">Simulated Levels</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        {% for inv in inventory %}
+                        <div class="col-sm-6 col-md-3">
+                            <div class="border rounded p-3 text-center bg-light position-relative">
+                                <div class="display-6 fw-bold text-danger mb-1">{{ inv.blood_group }}</div>
+                                <div class="fw-bold fs-5 text-dark">{{ inv.units_available }}</div>
+                                <div class="text-muted small mb-2">units on reserve</div>
+                                <span class="badge bg-{{ inv.stock_status|badge_color }} px-2 py-1">
+                                    {{ inv.stock_status }}
+                                </span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12 text-center py-4 text-muted">
+                            No inventory records configured for this facility.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

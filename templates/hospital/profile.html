@@ -1,0 +1,71 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Facility Profile : {{ facility.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 800px;">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('hospital.dashboard') }}">Hospital Portal</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Facility Profile</li>
+                </ol>
+            </nav>
+            <h2 class="h3 fw-bold mb-0">Edit Facility Profile</h2>
+            <p class="text-muted small mb-0">Update contact numbers, operational hours, and facility directory details</p>
+        </div>
+        <div>
+            <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-building-gear text-primary me-2"></i>General Facility Settings
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('hospital.facility_profile') }}">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Facility Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" value="{{ facility.name }}" required>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Contact Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" name="phone" class="form-control" value="{{ facility.phone }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Official Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ facility.email or '' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Physical Address <span class="text-danger">*</span></label>
+                    <textarea name="address" class="form-control" rows="2" required>{{ facility.address }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Operating Hours</label>
+                    <input type="text" name="operating_hours" class="form-control" value="{{ facility.operating_hours or '24/7' }}" placeholder="e.g. 24/7 or 08:00 - 20:00">
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-rose px-4">
+                        <i class="bi bi-check2 me-1"></i> Save Profile Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
