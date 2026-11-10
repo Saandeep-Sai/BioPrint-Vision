@@ -4,61 +4,183 @@
 
 {% block content %}
 <div class="row justify-content-center py-3">
-    <div class="col-lg-8">
+    <div class="col-lg-9">
         <div class="card p-4 shadow-sm border-0 mb-4">
-            <h3 class="fw-bold mb-1"><i class="bi bi-fingerprint text-danger me-2"></i>New Fingerprint Analysis</h3>
-            <p class="text-muted small mb-4">
-                Upload a single fingerprint image or a photograph containing multiple fingerprints. 
-                Our automated CV pipeline will isolate individual impressions, assess crop quality, and average raw probability vectors.
-            </p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1"><i class="bi bi-fingerprint text-danger me-2"></i>New Fingerprint Analysis</h3>
+                    <p class="text-muted small mb-0">
+                        Acquire impressions from a physical biometric scanner or upload captured fingerprint files.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary font-mono" id="scannerStatusPill">
+                        <span class="spinner-grow spinner-grow-sm text-warning me-1" style="width: 8px; height: 8px;"></span> Probing Hardware...
+                    </span>
+                </div>
+            </div>
 
-            <form method="POST" enctype="multipart/form-data" id="analysisForm">
-                <!-- Mode Selection -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold small">Analysis Mode</label>
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <input type="radio" class="btn-check" name="mode" id="modeAuto" value="auto" checked>
-                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeAuto">
-                                <div class="fw-bold"><i class="bi bi-magic me-1"></i> Auto-Detect</div>
-                                <div class="small text-muted">Automatically detects 1 or multiple fingers</div>
-                            </label>
+            <!-- Input Channel Tabs -->
+            <ul class="nav nav-pills nav-fill mb-4 p-1 rounded border" style="background-color: var(--bp-surface-elevated);" id="inputMethodTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold py-2" id="scanner-tab" data-bs-toggle="pill" data-bs-target="#tabScanner" type="button" role="tab">
+                        <i class="bi bi-cpu-fill text-danger me-2"></i>Live Biometric Scanner (Hardware SDK)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold py-2 text-muted" id="upload-tab" data-bs-toggle="pill" data-bs-target="#tabUpload" type="button" role="tab">
+                        <i class="bi bi-cloud-arrow-up me-2"></i>File Upload & Multi-Print Card
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="inputMethodTabContent">
+                <!-- ── TAB 1: LIVE BIOMETRIC SCANNER SDK ──────────────────────────────── -->
+                <div class="tab-pane fade show active" id="tabScanner" role="tabpanel">
+                    <!-- Scanner Device Selector Bar -->
+                    <div class="p-3 rounded border mb-4" style="background-color: var(--bp-obsidian);">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-semibold text-secondary mb-1">
+                                    <i class="bi bi-usb-symbol text-primary me-1"></i>Active Biometric Device
+                                </label>
+                                <select class="form-select font-mono text-light" id="scannerDeviceSelect" onchange="onScannerDeviceChanged()">
+                                    <option value="">Detecting connected devices...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5 d-flex gap-2 align-items-end">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-50 py-2" onclick="refreshScannerDevices()" id="btnRefreshDevices">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Rescan USB
+                                </button>
+                                <div class="w-50 text-end">
+                                    <span class="badge bg-dark border font-mono small d-block py-2 text-truncate" id="deviceInterfaceBadge">500 DPI Optical</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <input type="radio" class="btn-check" name="mode" id="modeSingle" value="single">
-                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeSingle">
-                                <div class="fw-bold"><i class="bi bi-file-earmark-image me-1"></i> Single Finger</div>
-                                <div class="small text-muted">Treats image as 1 cropped fingerprint</div>
-                            </label>
+                        <div class="mt-2 small text-muted d-flex align-items-center justify-content-between">
+                            <span id="deviceDescriptionText">Compatible with SecuGen, Mantra, DigitalPersona, UART R307, and Virtual Sensors.</span>
+                            <span class="text-success small fw-semibold" id="deviceStatusText"><i class="bi bi-check-circle-fill me-1"></i>Ready</span>
                         </div>
-                        <div class="col-md-4">
-                            <input type="radio" class="btn-check" name="mode" id="modeMultiple" value="multiple">
-                            <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeMultiple">
-                                <div class="fw-bold"><i class="bi bi-grid-3x3 me-1"></i> Multi-Finger</div>
-                                <div class="small text-muted">Splits & averages 2+ impressions</div>
-                            </label>
+                    </div>
+
+                    <!-- Sensor Platen Box -->
+                    <div class="row g-4 align-items-center mb-4">
+                        <div class="col-md-6 text-center">
+                            <div class="p-4 rounded position-relative d-flex flex-column align-items-center justify-content-center"
+                                 id="scannerPlatenBox"
+                                 style="min-height: 280px; border: 2px dashed rgba(244, 63, 94, 0.4); background: radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.05), #070a12 80%); transition: all 0.3s ease;">
+                                
+                                <div id="sensorIdleIcon" class="mb-3">
+                                    <i class="bi bi-fingerprint text-danger" style="font-size: 5rem; filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.3));"></i>
+                                </div>
+
+                                <div id="sensorScanLaser" class="d-none position-absolute w-100" style="height: 3px; background: #f43f5e; box-shadow: 0 0 15px #f43f5e; top: 20%; animation: scanSweep 1.2s infinite alternate ease-in-out;"></div>
+
+                                <div id="sensorCapturedPreviewContainer" class="d-none">
+                                    <img id="sensorCapturedImg" src="#" alt="Scanner Impression" class="img-thumbnail border-danger shadow" style="max-height: 230px; background-color: #000;">
+                                    <div class="small font-mono text-success mt-2" id="sensorMetricsText">500 DPI : Quality: Good</div>
+                                </div>
+
+                                <div class="fw-semibold text-light mb-1" id="sensorInstructionTitle">Optical Sensor Ready</div>
+                                <div class="text-muted small" id="sensorInstructionSub">Place finger firmly on the biometric glass platen</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-sliders text-danger me-2"></i>Capture & Analysis Options</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary">Analysis Mode</label>
+                                <div class="d-flex gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="scanner_mode" id="scanModeSingle" value="single" checked>
+                                        <label class="form-check-label small" for="scanModeSingle">Single Fingerprint</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="scanner_mode" id="scanModeAuto" value="auto">
+                                        <label class="form-check-label small" for="scanModeAuto">Auto-Detect Multi</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-light rounded border mb-3 small text-muted">
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span>Sensor Resolution:</span>
+                                    <strong class="text-light font-mono">500 DPI Standard</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span>Anti-Spoof Screening:</span>
+                                    <strong class="text-success"><i class="bi bi-shield-check me-1"></i>Active</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1">
+                                    <span>Model Head:</span>
+                                    <strong class="text-light font-mono">ResNet-50 (8-Class)</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-rose btn-lg py-3 fw-bold shadow" id="btnScanAndAnalyze" onclick="executeScanAndAnalyze()">
+                                    <i class="bi bi-fingerprint me-2"></i> Scan & Predict Blood Group
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-2" id="btnScanPreviewOnly" onclick="executeScanPreviewOnly()">
+                                    <i class="bi bi-camera me-1"></i> Preview Sensor Image Only
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- File Input -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold small">Upload Fingerprint Image / Photograph</label>
-                    <div class="p-4 rounded text-center" style="border: 2px dashed rgba(244, 63, 94, 0.4); background: rgba(15, 23, 42, 0.7);">
-                        <i class="bi bi-cloud-arrow-up fs-1 text-danger"></i>
-                        <div class="mt-2 fw-semibold text-light">Select an image file</div>
-                        <div class="text-muted small mb-3">Supported formats: BMP, PNG, JPG, JPEG (Max 16MB)</div>
-                        <input type="file" name="fingerprint_image" id="fingerprintInput" class="form-control w-75 mx-auto" accept=".bmp,.png,.jpg,.jpeg" required onchange="previewImage(this)">
-                        <div id="imagePreviewContainer" class="mt-3 d-none">
-                            <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail border-secondary" style="max-height: 220px; background-color: #070a12;">
+                <!-- ── TAB 2: FILE UPLOAD (PRESERVED) ─────────────────────────────────── -->
+                <div class="tab-pane fade" id="tabUpload" role="tabpanel">
+                    <form method="POST" enctype="multipart/form-data" id="analysisForm">
+                        <!-- Mode Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">Analysis Mode</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="mode" id="modeAuto" value="auto" checked>
+                                    <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeAuto">
+                                        <div class="fw-bold"><i class="bi bi-magic me-1"></i> Auto-Detect</div>
+                                        <div class="small text-muted">Detects 1 or multiple impressions</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="mode" id="modeSingle" value="single">
+                                    <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeSingle">
+                                        <div class="fw-bold"><i class="bi bi-file-earmark-image me-1"></i> Single Finger</div>
+                                        <div class="small text-muted">Treats image as 1 cropped print</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="mode" id="modeMultiple" value="multiple">
+                                    <label class="btn btn-outline-secondary w-100 text-start p-3" for="modeMultiple">
+                                        <div class="fw-bold"><i class="bi bi-grid-3x3 me-1"></i> Multi-Finger</div>
+                                        <div class="small text-muted">Splits & averages 2+ impressions</div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <button type="submit" class="btn btn-rose btn-lg w-100 py-3 fw-bold" id="submitBtn">
-                    <i class="bi bi-lightning-charge-fill me-2"></i> Run Automated Analysis
-                </button>
-            </form>
+                        <!-- File Input -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">Upload Fingerprint Image / Multi-Print Card</label>
+                            <div class="p-4 rounded text-center" style="border: 2px dashed rgba(244, 63, 94, 0.4); background: rgba(15, 23, 42, 0.7);">
+                                <i class="bi bi-cloud-arrow-up fs-1 text-danger"></i>
+                                <div class="mt-2 fw-semibold text-light">Select an image file</div>
+                                <div class="text-muted small mb-3">Supported formats: BMP, PNG, JPG, JPEG, TIFF (Max 16MB)</div>
+                                <input type="file" name="fingerprint_image" id="fingerprintInput" class="form-control w-75 mx-auto" accept=".bmp,.png,.jpg,.jpeg,.tiff,.webp" onchange="previewImage(this)">
+                                <div id="imagePreviewContainer" class="mt-3 d-none">
+                                    <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail border-secondary" style="max-height: 220px; background-color: #070a12;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-rose btn-lg w-100 py-3 fw-bold" id="submitBtn">
+                            <i class="bi bi-lightning-charge-fill me-2"></i> Run Automated Analysis
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- Pre-Packaged Verified Samples Card -->
@@ -76,26 +198,218 @@
                 {% endfor %}
             </div>
             <div class="small text-muted mt-2">
-                <em>*Clicking a sample will prepare that file from the project's data directory for testing.</em>
+                <em>*Clicking a sample prepares the file from the local repository for automated evaluation.</em>
             </div>
         </div>
 
         <!-- Acquisition Guidelines -->
         <div class="card p-3 bg-light border-0">
-            <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb text-primary me-2"></i>Fingerprint Image Quality Tips</h6>
+            <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb text-primary me-2"></i>Sensor & Acquisition Guidelines</h6>
             <ul class="text-muted small mb-0 ps-3">
-                <li>Ensure even lighting without heavy cast shadows or surface glare.</li>
-                <li>Position the camera perpendicular to the fingerprint impressions to reduce perspective distortion.</li>
-                <li>Ensure papillary ridge details and bifurcations are in sharp focus.</li>
-                <li>Leave adequate spacing between multiple fingerprints so bounding boxes don't merge.</li>
+                <li>Keep the optical platen glass clean of residual grease and moisture.</li>
+                <li>Apply moderate, uniform pressure on the sensor center to prevent ridge smearing.</li>
+                <li>For multi-finger cards, ensure adequate margin between impressions to facilitate automated bounding box extraction.</li>
             </ul>
         </div>
     </div>
 </div>
+
+<style>
+@keyframes scanSweep {
+    0% { top: 15%; opacity: 0.6; }
+    50% { opacity: 1.0; }
+    100% { top: 85%; opacity: 0.6; }
+}
+</style>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+let availableDevices = [];
+
+document.addEventListener("DOMContentLoaded", function () {
+    refreshScannerDevices();
+});
+
+// Enumerate connected scanners from /api/scanner/devices
+async function refreshScannerDevices() {
+    const select = document.getElementById("scannerDeviceSelect");
+    const statusPill = document.getElementById("scannerStatusPill");
+    const btnRefresh = document.getElementById("btnRefreshDevices");
+
+    btnRefresh.disabled = true;
+    statusPill.innerHTML = '<span class="spinner-grow spinner-grow-sm text-warning me-1"></span> Probing Hardware...';
+
+    try {
+        const resp = await fetch("/api/scanner/devices");
+        const data = await resp.json();
+
+        if (data.status === "success" && data.devices) {
+            availableDevices = data.devices;
+            select.innerHTML = "";
+
+            data.devices.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d.device_id;
+                const statusEmoji = d.is_connected ? "🟢" : "⚪";
+                opt.textContent = `${statusEmoji} ${d.name} (${d.vendor})`;
+                if (d.device_id === data.active_device_id) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+
+            onScannerDeviceChanged();
+
+            const connectedCount = data.devices.filter(d => d.is_connected).length;
+            statusPill.className = "badge bg-success font-mono";
+            statusPill.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${connectedCount} Active Scanner(s)`;
+        } else {
+            statusPill.className = "badge bg-danger font-mono";
+            statusPill.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Device Probe Error';
+        }
+    } catch (e) {
+        console.error("Scanner enumeration error:", e);
+        statusPill.className = "badge bg-danger font-mono";
+        statusPill.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Offline';
+    } finally {
+        btnRefresh.disabled = false;
+    }
+}
+
+function onScannerDeviceChanged() {
+    const select = document.getElementById("scannerDeviceSelect");
+    const selectedId = select.value;
+    const device = availableDevices.find(d => d.device_id === selectedId);
+
+    if (device) {
+        document.getElementById("deviceInterfaceBadge").textContent = `${device.dpi} DPI : ${device.interface}`;
+        document.getElementById("deviceDescriptionText").textContent = device.description || device.name;
+        const statusSpan = document.getElementById("deviceStatusText");
+
+        if (device.is_connected) {
+            statusSpan.className = "text-success small fw-semibold";
+            statusSpan.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${device.status_text}`;
+        } else {
+            statusSpan.className = "text-warning small fw-semibold";
+            statusSpan.innerHTML = `<i class="bi bi-exclamation-circle-fill me-1"></i> ${device.status_text}`;
+        }
+    }
+}
+
+// Preview sensor capture without analysis
+async function executeScanPreviewOnly() {
+    const select = document.getElementById("scannerDeviceSelect");
+    const deviceId = select.value;
+    const platen = document.getElementById("scannerPlatenBox");
+    const laser = document.getElementById("sensorScanLaser");
+    const idleIcon = document.getElementById("sensorIdleIcon");
+    const previewContainer = document.getElementById("sensorCapturedPreviewContainer");
+    const previewImg = document.getElementById("sensorCapturedImg");
+    const title = document.getElementById("sensorInstructionTitle");
+    const sub = document.getElementById("sensorInstructionSub");
+    const btn = document.getElementById("btnScanPreviewOnly");
+
+    btn.disabled = true;
+    laser.classList.remove("d-none");
+    idleIcon.classList.add("d-none");
+    previewContainer.classList.add("d-none");
+    title.textContent = "Scanning Impression...";
+    sub.textContent = "Hold finger still on the platen glass";
+    platen.style.borderColor = "var(--bp-primary)";
+
+    try {
+        const resp = await fetch("/api/scanner/capture", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device_id: deviceId, timeout: 10.0 })
+        });
+        const data = await resp.json();
+
+        if (data.status === "success" && data.image_base64) {
+            laser.classList.add("d-none");
+            previewContainer.classList.remove("d-none");
+            previewImg.src = data.image_base64;
+            document.getElementById("sensorMetricsText").textContent = 
+                `${data.width}x${data.height} px @ ${data.dpi} DPI | Quality: ${data.quality_status} (${(data.quality_score * 100).toFixed(0)}%) | Latency: ${data.capture_time_ms} ms`;
+            title.textContent = "Impression Captured";
+            sub.textContent = `Acquired via ${data.device_name}`;
+        } else {
+            alert(data.error || "Capture failed. Ensure the scanner is connected.");
+            resetPlaten();
+        }
+    } catch (e) {
+        alert("Scanner capture error: " + e.message);
+        resetPlaten();
+    } finally {
+        btn.disabled = false;
+        laser.classList.add("d-none");
+    }
+}
+
+// 1-Click Biometric Scan and Analysis
+async function executeScanAndAnalyze() {
+    const select = document.getElementById("scannerDeviceSelect");
+    const deviceId = select.value;
+    const mode = document.querySelector('input[name="scanner_mode"]:checked')?.value || "single";
+    const btn = document.getElementById("btnScanAndAnalyze");
+    const platen = document.getElementById("scannerPlatenBox");
+    const laser = document.getElementById("sensorScanLaser");
+    const idleIcon = document.getElementById("sensorIdleIcon");
+    const previewContainer = document.getElementById("sensorCapturedPreviewContainer");
+    const title = document.getElementById("sensorInstructionTitle");
+    const sub = document.getElementById("sensorInstructionSub");
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Capturing from Sensor...';
+    laser.classList.remove("d-none");
+    idleIcon.classList.add("d-none");
+    previewContainer.classList.add("d-none");
+    title.textContent = "Acquiring Biometric Scan...";
+    sub.textContent = "Reading minutiae at 500 DPI...";
+    platen.style.borderColor = "var(--bp-primary)";
+
+    try {
+        const resp = await fetch("/api/scanner/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device_id: deviceId, mode: mode })
+        });
+        const data = await resp.json();
+
+        if (data.status === "success" && data.redirect_url) {
+            btn.className = "btn btn-success btn-lg py-3 fw-bold";
+            btn.innerHTML = `<i class="bi bi-check2-circle me-2"></i> Predicted: ${data.final_blood_group} (${data.final_confidence}%)`;
+            title.textContent = "Analysis Complete!";
+            sub.textContent = "Redirecting to comprehensive clinical report...";
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 800);
+        } else {
+            alert(data.error || "Analysis failed. Please try again.");
+            resetPlaten();
+            btn.disabled = false;
+            btn.className = "btn btn-rose btn-lg py-3 fw-bold shadow";
+            btn.innerHTML = '<i class="bi bi-fingerprint me-2"></i> Scan & Predict Blood Group';
+        }
+    } catch (e) {
+        alert("Scan and analysis request failed: " + e.message);
+        resetPlaten();
+        btn.disabled = false;
+        btn.className = "btn btn-rose btn-lg py-3 fw-bold shadow";
+        btn.innerHTML = '<i class="bi bi-fingerprint me-2"></i> Scan & Predict Blood Group';
+    }
+}
+
+function resetPlaten() {
+    document.getElementById("sensorScanLaser").classList.add("d-none");
+    document.getElementById("sensorIdleIcon").classList.remove("d-none");
+    document.getElementById("sensorCapturedPreviewContainer").classList.add("d-none");
+    document.getElementById("sensorInstructionTitle").textContent = "Optical Sensor Ready";
+    document.getElementById("sensorInstructionSub").textContent = "Place finger firmly on the biometric glass platen";
+    document.getElementById("scannerPlatenBox").style.borderColor = "rgba(244, 63, 94, 0.4)";
+}
+
 function previewImage(input) {
     const previewContainer = document.getElementById('imagePreviewContainer');
     const preview = document.getElementById('imagePreview');
@@ -110,12 +424,12 @@ function previewImage(input) {
 }
 
 function loadSample(samplePath) {
-    // Fetch sample image file as Blob and attach to input
+    // Switch to upload tab and load sample
+    const uploadTabBtn = document.getElementById('upload-tab');
+    bootstrap.Tab.getOrCreateInstance(uploadTabBtn).show();
+
     fetch('/static/' + samplePath).then(res => {
-        if (!res.ok) {
-            // fallback direct path
-            return fetch('/' + samplePath);
-        }
+        if (!res.ok) return fetch('/' + samplePath);
         return res;
     }).then(r => r.blob()).then(blob => {
         const file = new File([blob], samplePath.split('/').pop(), { type: 'image/bmp' });

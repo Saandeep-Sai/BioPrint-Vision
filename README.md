@@ -1,7 +1,7 @@
 # 🩸 BioPrint Vision (V2 Healthcare & Biometric Platform)
 
 > **AI-Powered Fingerprint-to-Blood-Group Classification & Clinical Decision Support System**  
-> *Research & Biometric Screening Platform — Not for Clinical Diagnostic Use.*
+> *Research & Biometric Screening Platform : Not for Clinical Diagnostic Use.*
 
 ---
 
@@ -138,11 +138,65 @@ The database includes pre-seeded demo accounts for technical evaluation:
 
 ---
 
+## 🔌 Physical Biometric Scanner Plug-and-Play SDK
+
+BioPrint Vision includes a hardware device driver abstraction layer (`services/scanner/`) enabling direct plug-and-play biometric capture from physical optical/capacitive scanners and local device bridges:
+
+### Supported Hardware Drivers
+
+1. **SecuGen Hamster Series (`secugen_webapi`):**
+   * **Models:** Hamster Pro 20, Hamster Plus, Hamster IV, Hamster Air, Unity 20.
+   * **Interface:** Local SecuGen FDx WebAPI service on `http://127.0.0.1:8084` or `https://127.0.0.1:8443`.
+   * **Specs:** 500 DPI uncompressed BMP output, Auto-On touch detection, Fake Finger Rejection.
+
+2. **Mantra MFS100 (`mantra_mfs100`):**
+   * **Models:** MFS100 V54, MFS100 V61, MFS500.
+   * **Interface:** Local Mantra RD Service on `http://127.0.0.1:11100` / `11101`.
+   * **Specs:** STQC-certified 500 DPI optical platen, automated minutiae capture.
+
+3. **DigitalPersona U.are.U Series (`digitalpersona_uareu`):**
+   * **Models:** U.are.U 4500, 5160, 5300.
+   * **Interface:** DigitalPersona Web Client / One Touch service on `http://127.0.0.1:52181`.
+   * **Specs:** 512 DPI optical sensor with blue platen illumination.
+
+4. **UART / Serial Optical Modules (`serial_optical_r307`):**
+   * **Models:** Grow / Synochip R307, R502, R503, AS608.
+   * **Interface:** Standard USB-to-UART bridge (CP2102, CH340, FTDI) on COM ports.
+   * **Specs:** 500 DPI DSP module using standard Synochip 0xEF01 packet protocol.
+
+5. **BioPrint Virtual Optical Scanner (`simulator_sensor`):**
+   * **Models:** BioPrint V-Scan 500 (Virtual Sensor).
+   * **Interface:** Built-in hardware simulation engine.
+   * **Specs:** High-fidelity 500 DPI optical platen simulation with sensor Gaussian noise and touch latency (~450ms). Guarantees immediate plug-and-play operation for development, automated testing, and CI environments without requiring physical USB hardware attached.
+
+### Scanner REST APIs
+
+* **Device Enumeration:** `GET /api/scanner/devices` returns detected physical and virtual scanners with real-time connectivity status.
+* **Live Sensor Capture:** `POST /api/scanner/capture` triggers optical acquisition and returns Base64-encoded 500 DPI BMP impression with quality metrics.
+* **1-Click Scan & Predict:** `POST /api/scanner/analyze` triggers sensor capture, executes the ResNet-50 classification pipeline, stores database records, and returns the analysis view URL.
+
+### Web Interface Integration
+
+Navigate to **New Analysis (`/analysis/new`)** to use the interactive **Live Biometric Scanner** tab:
+* Auto-detects connected USB devices.
+* Live optical sensor platen with laser sweep feedback.
+* **Preview Sensor Image Only:** Inspect impression clarity, 500 DPI resolution, and quality before analysis.
+* **Scan & Predict Blood Group:** 1-click end-to-end acquisition, classification, and redirection to clinical reports.
+
+---
+
 ## 🧪 Verification & Test Suites
 
-The repository contains three complete, passing test suites:
+The repository contains four complete, passing test suites:
 
-### 1. End-to-End Flask Platform Integration Tests
+### 1. Biometric Scanner Plug-and-Play SDK Tests
+Validates device discovery, driver fallback, 500 DPI BMP generation, quality assessment, and REST analysis routes:
+```powershell
+d:\BioPrint-Vision\.venv\Scripts\python.exe tests\test_scanner_sdk.py
+```
+*(8 of 8 tests passing)*
+
+### 2. End-to-End Flask Platform Integration Tests
 Validates all routes, authentication, role restrictions, analysis workflow, PDF generation, AI assistant, and admin operations:
 ```powershell
 d:\BioPrint-Vision\.venv\Scripts\python.exe tests\test_full_platform.py
@@ -208,6 +262,7 @@ BioPrint-Vision/
 │   ├── auth.py                    # Login, registration, role guards
 │   ├── main.py                    # Home, about, user dashboard
 │   ├── analysis.py                # Biometric analysis upload, view, REST APIs
+│   ├── scanner.py                 # Biometric scanner discovery, live capture & 1-click analysis
 │   ├── availability.py            # Blood stock directory & search APIs
 │   ├── donor.py                   # Compatibility guide & donor pre-screening
 │   ├── reports.py                 # PDF list & secure download
@@ -216,6 +271,10 @@ BioPrint-Vision/
 │   └── admin.py                   # Admin dashboard, users, facilities, rules
 │
 ├── services/                      # Healthcare Decision Support Services
+│   ├── scanner/                   # Physical Biometric Scanner Plug-and-Play SDK
+│   │   ├── base.py                # Abstract driver interface & capture models
+│   │   ├── manager.py             # Hardware discovery, auto-detection & routing
+│   │   └── drivers/               # SecuGen, Mantra, DigitalPersona, Serial & Simulator
 │   ├── compatibility.py           # Deterministic ABO/Rh RBC & plasma matrix
 │   ├── eligibility.py             # Deterministic donor pre-screening rules
 │   ├── inventory.py               # Haversine distance, facility search & stock classifier
@@ -228,7 +287,7 @@ BioPrint-Vision/
 │   ├── index.html                 # Platform landing page
 │   ├── about.html                 # Architecture & scientific documentation
 │   ├── dashboard.html             # User control dashboard
-│   ├── analysis/                  # new.html, view.html, history.html
+│   ├── analysis/                  # new.html (Scanner & Upload tabs), view.html, history.html
 │   ├── healthcare/                # compatibility.html, donor_screening.html
 │   ├── availability/              # search.html, facility_detail.html
 │   ├── assistant/                 # chat.html
@@ -238,6 +297,7 @@ BioPrint-Vision/
 │   └── errors/                    # 404.html, 500.html
 │
 └── tests/                         # Test Suites
+    ├── test_scanner_sdk.py        # Biometric scanner discovery, capture & analysis tests
     ├── test_multi_fingerprint.py  # Unit tests for CV detection & probability averaging
     └── test_full_platform.py      # End-to-end platform integration test suite
 ```

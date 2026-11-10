@@ -1,5 +1,5 @@
 """
-BioPrint Vision — Full Flask Application Server
+BioPrint Vision : Full Flask Application Server
 Launches the complete multi-user healthcare platform:
   - Authentication & Role-Based Access (User, Hospital, Admin)
   - Single & Multi-Fingerprint Automated Analysis
@@ -10,6 +10,7 @@ Launches the complete multi-user healthcare platform:
   - Contextual AI Assistant
   - Smart PDF Report Generation
   - Admin Management Dashboard
+  - Physical & Simulated Fingerprint Scanner SDK Integration
 
 Launch via:
     python run_flask.py
@@ -37,6 +38,7 @@ from routes import (
     assistant_bp,
     hospital_bp,
     admin_bp,
+    scanner_bp,
 )
 
 
@@ -61,6 +63,7 @@ def create_app(config_class=Config):
     app.register_blueprint(assistant_bp)
     app.register_blueprint(hospital_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(scanner_bp)
 
     # Custom Jinja Filters
     @app.template_filter("badge_color")

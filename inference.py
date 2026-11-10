@@ -32,6 +32,7 @@ from preprocessing.image_preprocess import (
     IMG_SIZE,
 )
 from preprocessing.quality import check_image_quality
+from preprocessing.domain_adapt import adapt_if_needed
 from explainability.gradcam import GradCAM, create_gradcam_overlay
 from training.train import build_model
 
@@ -117,6 +118,7 @@ class BloodGroupPredictor:
         self,
         image_input: Union[str, Path, Image.Image, np.ndarray],
         return_gradcam: bool = True,
+        domain_adapt: bool = True,
     ) -> Dict[str, Any]:
         """
         Execute end-to-end inference on a single fingerprint image.
@@ -124,6 +126,8 @@ class BloodGroupPredictor:
         Args:
             image_input: File path, PIL Image, or NumPy array
             return_gradcam: Whether to compute and return Grad-CAM visualization
+            domain_adapt: Whether to apply domain-adaptive preprocessing for
+                          scanner/external images (recommended for non-training data)
 
         Returns:
             Dict containing:
@@ -171,14 +175,21 @@ class BloodGroupPredictor:
                 "stats": {},
             }
 
-        # ── Step 3: Preprocessing Transform ──────────────────────────────────
+        # ── Step 3: Domain-Adaptive Preprocessing (scanner normalization) ──
+        if domain_adapt:
+            try:
+                pil_img = adapt_if_needed(pil_img)
+            except Exception:
+                pass  # If adaptation fails, proceed with original image
+
+        # ── Step 4: Preprocessing Transform ──────────────────────────────────
         try:
             tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
         except Exception as e:
             result["error"] = f"Preprocessing failed: {e}"
             return result
 
-        # ── Step 4: Model Forward Pass & Probabilities ───────────────────────
+        # ── Step 5: Model Forward Pass & Probabilities ───────────────────────
         try:
             with torch.no_grad():
                 outputs = self.model(tensor)
@@ -202,7 +213,7 @@ class BloodGroupPredictor:
             result["error"] = f"Model execution error: {e}"
             return result
 
-        # ── Step 5: Explainability (Grad-CAM) ─────────────────────────────────
+        # ── Step 6: Explainability (Grad-CAM) ─────────────────────────────────
         if return_gradcam and self.gradcam_available:
             try:
                 cam = self.gradcam.generate(tensor, pred_idx)
