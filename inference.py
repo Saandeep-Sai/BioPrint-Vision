@@ -1,11 +1,11 @@
 """
-BioPrint Vision — Standalone Inference Module
+BioPrint Vision -- Standalone Inference Module
 
 Provides the BloodGroupPredictor class that encapsulates:
   1. Checkpoint loading (ResNet-50 with custom classification head)
   2. Input validation and image quality assessment
   3. Preprocessing (matching training resolution & normalization)
-  4. 8-class softmax inference with confidence calculation
+  4. Multi-strategy ensemble inference for real-world images
   5. Saliency visualization via Grad-CAM
   6. Structured, deterministic result output
 
@@ -18,12 +18,12 @@ import sys
 import json
 import argparse
 from pathlib import Path
-from typing import Union, Dict, Any, Optional
+from typing import Union, Dict, Any, Optional, List
 
 import torch
 import torch.nn as nn
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from preprocessing.image_preprocess import (
@@ -32,7 +32,11 @@ from preprocessing.image_preprocess import (
     IMG_SIZE,
 )
 from preprocessing.quality import check_image_quality
-from preprocessing.domain_adapt import adapt_if_needed
+from preprocessing.domain_adapt import (
+    adapt_if_needed,
+    is_scanner_image,
+    get_ensemble_preprocessed,
+)
 from explainability.gradcam import GradCAM, create_gradcam_overlay
 from training.train import build_model
 
@@ -44,6 +48,11 @@ class BloodGroupPredictor:
     """
     Production-ready predictor for fingerprint-based blood-group classification.
     Loads the trained PyTorch checkpoint once into memory for rapid inference.
+
+    For real-world images (camera photos, scanner captures, ink prints):
+      Uses multi-strategy ensemble + TTA to maximize accuracy.
+    For training-like images:
+      Uses direct single-pass inference (already high accuracy).
     """
 
     def __init__(
@@ -114,6 +123,60 @@ class BloodGroupPredictor:
             self.gradcam = None
             self.gradcam_available = False
 
+    def _forward_single(self, pil_img: Image.Image) -> np.ndarray:
+        """
+        Run a single forward pass on a preprocessed PIL image.
+        Returns raw softmax probability vector (shape: [num_classes]).
+        """
+        pil_img = pil_img.convert("RGB")
+        tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            outputs = self.model(tensor)
+            probs = torch.softmax(outputs[0], dim=0)
+        return probs.cpu().numpy()
+
+    def _ensemble_predict(self, pil_img: Image.Image) -> np.ndarray:
+        """
+        Multi-strategy ensemble prediction for real-world images.
+
+        Runs multiple preprocessing strategies + TTA augmentations,
+        averages all softmax vectors, and returns the ensemble probability.
+
+        This is the KEY to robust real-world prediction:
+        - No single strategy works for all images
+        - But the correct class tends to get moderate probability across
+          multiple strategies, while wrong classes are inconsistent
+        - Averaging washes out the noise and amplifies the signal
+        """
+        all_probs = []
+
+        # Get all preprocessing strategies
+        preprocessed_list = get_ensemble_preprocessed(pil_img)
+
+        for strategy_name, processed_img in preprocessed_list:
+            # Run base prediction
+            probs = self._forward_single(processed_img)
+            all_probs.append(probs)
+
+            # TTA: horizontal flip for each strategy
+            flipped = ImageOps.mirror(processed_img)
+            probs_flip = self._forward_single(flipped)
+            all_probs.append(probs_flip)
+
+        if not all_probs:
+            # Fallback: just run the original image
+            return self._forward_single(pil_img)
+
+        # Average all probability vectors
+        ensemble_probs = np.mean(all_probs, axis=0)
+
+        # Renormalize to ensure sum=1
+        total = ensemble_probs.sum()
+        if total > 0:
+            ensemble_probs = ensemble_probs / total
+
+        return ensemble_probs
+
     def predict(
         self,
         image_input: Union[str, Path, Image.Image, np.ndarray],
@@ -122,6 +185,9 @@ class BloodGroupPredictor:
     ) -> Dict[str, Any]:
         """
         Execute end-to-end inference on a single fingerprint image.
+
+        For external/real-world images: uses multi-strategy ensemble
+        For training-like images: uses direct single-pass inference
 
         Args:
             image_input: File path, PIL Image, or NumPy array
@@ -147,7 +213,7 @@ class BloodGroupPredictor:
             "error": None,
         }
 
-        # ── Step 1: Input Validation & Image Loading ─────────────────────────
+        # -- Step 1: Input Validation & Image Loading
         if image_input is None:
             result["error"] = "No image provided. Please supply a fingerprint image."
             return result
@@ -161,7 +227,7 @@ class BloodGroupPredictor:
             result["error"] = f"Failed to open image file: {e}"
             return result
 
-        # ── Step 2: Image Quality Assessment ─────────────────────────────────
+        # -- Step 2: Image Quality Assessment
         try:
             quality = check_image_quality(pil_img)
             result["quality"] = quality
@@ -175,30 +241,20 @@ class BloodGroupPredictor:
                 "stats": {},
             }
 
-        # ── Step 3: Domain-Adaptive Preprocessing (scanner normalization) ──
-        if domain_adapt:
-            try:
-                pil_img = adapt_if_needed(pil_img)
-            except Exception:
-                pass  # If adaptation fails, proceed with original image
-
-        # ── Step 4: Preprocessing Transform ──────────────────────────────────
+        # -- Step 3: Domain-Adaptive Preprocessing & Inference
         try:
-            tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
-        except Exception as e:
-            result["error"] = f"Preprocessing failed: {e}"
-            return result
+            is_external = is_scanner_image(pil_img)
 
-        # ── Step 5: Model Forward Pass & Probabilities ───────────────────────
-        try:
-            with torch.no_grad():
-                outputs = self.model(tensor)
-                probs = torch.softmax(outputs[0], dim=0)
-                conf, pred_idx_tensor = torch.max(probs, 0)
+            if domain_adapt and is_external:
+                # ENSEMBLE: Multi-strategy preprocessing for real-world images
+                probs = self._ensemble_predict(pil_img)
+            else:
+                # DIRECT: Single-pass for training-like images
+                probs = self._forward_single(pil_img)
 
-            pred_idx = int(pred_idx_tensor.item())
+            pred_idx = int(np.argmax(probs))
             predicted_class = self.class_names[pred_idx]
-            confidence_pct = round(float(conf.item()) * 100.0, 2)
+            confidence_pct = round(float(probs[pred_idx]) * 100.0, 2)
 
             result["predicted_class"] = predicted_class
             result["confidence"] = confidence_pct
@@ -206,16 +262,25 @@ class BloodGroupPredictor:
             # Populate exact 8-class probability dictionary
             probs_dict = {}
             for i, name in enumerate(self.class_names):
-                probs_dict[name] = round(float(probs[i].item()) * 100.0, 2)
+                probs_dict[name] = round(float(probs[i]) * 100.0, 2)
             result["probabilities"] = probs_dict
 
         except Exception as e:
             result["error"] = f"Model execution error: {e}"
             return result
 
-        # ── Step 6: Explainability (Grad-CAM) ─────────────────────────────────
+        # -- Step 4: Explainability (Grad-CAM)
+        # Use the primary adapted image for Grad-CAM visualization
         if return_gradcam and self.gradcam_available:
             try:
+                # Use gabor-adapted image for Grad-CAM on external images
+                if domain_adapt and is_external:
+                    gradcam_img = adapt_if_needed(pil_img, force=True)
+                else:
+                    gradcam_img = pil_img
+
+                gradcam_img = gradcam_img.convert("RGB")
+                tensor = self.transform(gradcam_img).unsqueeze(0).to(self.device)
                 cam = self.gradcam.generate(tensor, pred_idx)
                 overlay = create_gradcam_overlay(
                     pil_img, cam, target_size=(self.img_size, self.img_size)
@@ -229,7 +294,7 @@ class BloodGroupPredictor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="BioPrint Vision — CLI Inference")
+    parser = argparse.ArgumentParser(description="BioPrint Vision -- CLI Inference")
     parser.add_argument("--image", type=str, required=True, help="Path to input fingerprint image")
     parser.add_argument("--model", type=str, default="models/best_model.pth", help="Checkpoint path")
     parser.add_argument("--classes", type=str, default="models/class_names.json", help="Class names JSON")
